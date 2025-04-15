@@ -1,0 +1,10 @@
+文档/
+参考/
+图片/
+node_modules/
+dist/
+build/
+public/
+src/assets/images/
+src/assets/videos/
+

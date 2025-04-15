@@ -1,0 +1,249 @@
+---
+description: 
+globs: .js,.html,.css,.vue,.py
+alwaysApply: false
+---
+## **前后端开发规范**
+
+---
+
+**前后端开发规范: 塞外本草 / 壹世健 官方网站**
+
+* **版本:** 1.0
+* **日期:** 2025年4月8日
+* **目的:** 规范前后端代码的编写、版本控制、测试、文档及协作流程，确保项目高质量交付。
+
+**1. 通用原则 (General Principles)**
+
+* **代码清晰 (Clean Code):** 代码应易于阅读、理解和维护。遵循 KISS (Keep It Simple, Stupid) 和 DRY (Don't Repeat Yourself) 原则。
+* **一致性 (Consistency):** 严格遵守本文档定义的规范和约定。
+* **模块化与复用 (Modularity & Reusability):** 设计可复用的组件、服务和函数。
+* **可测试性 (Testability):** 编写易于进行单元测试和集成测试的代码。
+* **安全性 (Security):** 时刻关注安全最佳实践，防范常见漏洞。
+* **注释与文档 (Comments & Documentation):** 对复杂逻辑、公共接口和重要模块进行必要的注释和文档说明。
+
+**2. 版本控制规范 (Git)**
+
+* **分支策略:** 推荐使用 **GitHub Flow** (或类似的简化流程):
+    * `main`: 主分支，始终保持稳定且可随时部署到生产环境的状态。禁止直接向 `main` 推送代码。
+    * **特性分支 (Feature Branches):** 从 `main` 创建，用于开发新功能。命名规范: `feat/<feature-name>` (例如: `feat/user-login`, `feat/product-display`)。
+    * **修复分支 (Fix Branches):** 从 `main` 创建，用于修复 Bug。命名规范: `fix/<issue-description>` (例如: `fix/checkout-price-error`)。
+    * 其他可选分支类型: `refactor/`, `docs/`, `chore/` 等。
+* **提交信息规范 (Commit Messages):** 必须遵循 **Conventional Commits** 规范。格式: `<type>(<scope>): <subject>`
+    * `type`: `feat` (新功能), `fix` (Bug修复), `docs` (文档), `style` (格式), `refactor` (重构), `perf` (性能), `test` (测试), `chore` (构建/工具)。
+    * `scope` (可选): 修改的范围 (例如: `api`, `ui`, `auth`, `db`)。
+    * `subject`: 简洁描述本次提交的目的。
+    * 示例: `feat(api): add product search endpoint`, `fix(ui): correct shopping cart item count display`。
+* **代码合并流程 (Pull/Merge Requests):**
+    * 所有向 `main` 分支的合并必须通过 Pull Request (PR) / Merge Request (MR)。
+    * PR/MR 必须包含清晰的描述，说明变更内容和目的。
+    * 至少需要 **一名** 其他团队成员进行代码审查 (Code Review) 并批准后方可合并。
+    * 合并前确保代码通过所有自动化检查 (Linting, Testing, CI)。
+
+**3. 后端开发规范 (Python / Flask)**
+
+* **3.1 项目结构:**
+    * 采用 Flask Blueprints 进行模块化组织。
+    * 推荐结构:
+        ```
+        /project-root
+        |-- app/                     # 应用核心代码
+        |   |-- __init__.py          # 应用工厂
+        |   |-- models/              # SQLAlchemy 模型
+        |   |-- schemas/             # Marshmallow/Pydantic 数据校验/序列化模式 (可选)
+        |   |-- services/            # 业务逻辑层 (可选)
+        |   |-- apis/                # API 蓝图 (按模块划分)
+        |   |   |-- __init__.py
+        |   |   |-- auth.py
+        |   |   |-- product.py
+        |   |   |-- user.py
+        |   |   |-- member.py        # 认养/会员相关
+        |   |   `-- traceability.py   # 溯源相关
+        |   |-- static/              # 静态文件 (如果后端也提供)
+        |   `-- templates/           # Jinja2 模板 (如果后端也提供)
+        |-- migrations/            # Flask-Migrate 迁移脚本
+        |-- tests/                 # 测试代码
+        |-- venv/                  # Python 虚拟环境
+        |-- config.py              # 配置文件
+        |-- requirements.txt       # 依赖列表
+        |-- manage.py / run.py     # 启动/管理脚本
+        `-- .env                   # 环境变量 (不提交到 Git)
+        ```
+* **3.2 编码风格:**
+    * 严格遵守 **PEP 8** 规范。
+    * 使用 `Black` 进行代码格式化，`Flake8` 进行代码风格和质量检查。在 CI 中集成检查。
+* **3.3 命名约定:**
+    * 变量、函数、方法、模块名: `snake_case` (小写+下划线)。
+    * 类名: `PascalCase` (驼峰式)。
+    * 常量: `UPPER_SNAKE_CASE` (大写+下划线)。
+    * 命名应清晰、具有描述性，避免使用单字母变量名 (循环变量除外)。
+* **3.4 API 设计:**
+    * 遵循 **RESTful** 设计原则。
+    * 使用标准 HTTP 动词: `GET` (查询), `POST` (创建), `PUT` (完整更新), `PATCH` (部分更新), `DELETE` (删除)。
+    * **URL 规范:** 名词复数形式，层级清晰，版本化。示例: `/api/v1/products`, `/api/v1/products/{product_id}`, `/api/v1/users/{user_id}/orders`。
+    * **请求/响应:** 使用 JSON 格式。
+    * **响应体结构:** 统一响应格式，包含状态信息和数据/错误信息。
+        * 成功: `{"status": "success", "data": { ... }}` 或 `{"status": "success", "data": [ ... ]}`
+        * 失败: `{"status": "error", "message": "错误描述信息", "code": "UNIQUE_ERROR_CODE"}`
+    * 使用明确的 HTTP 状态码 (200, 201, 204, 400, 401, 403, 404, 500 等)。
+* **3.5 数据库交互:**
+    * 使用 SQLAlchemy ORM 操作数据库 (SQLite)。
+    * 模型定义在 `app/models/` 目录下，类名与表名单数形式对应，使用 `__tablename__` 指定表名。
+    * **严禁手动修改数据库结构**，所有变更必须通过 Flask-Migrate 生成和应用迁移脚本。
+    * 注意查询性能优化，避免 N+1 问题，合理使用 `joinedload`, `selectinload`。根据查询需要添加数据库索引。
+* **3.6 配置管理:**
+    * 通过 `config.py` 文件管理不同环境 (Development, Testing, Production) 的配置。
+    * 敏感信息 (数据库密码, Secret Key, API Keys) **必须** 通过环境变量 (`.env` 文件加载) 注入，**严禁**硬编码在代码或配置文件中。
+* **3.7 错误处理与日志:**
+    * 使用 Flask 的错误处理机制捕获异常，返回统一格式的错误响应。
+    * 使用 Python 内建的 `logging` 模块记录日志。
+    * 配置结构化日志 (如 JSON 格式) 以便于收集和分析。
+    * 根据不同级别 (DEBUG, INFO, WARNING, ERROR, CRITICAL) 记录适当信息。生产环境应主要记录 INFO 及以上级别。
+    * 关键操作（如支付、重要数据修改）应有明确的日志记录。
+* **3.8 测试 (Testing):**
+    * 使用 `pytest` 作为测试框架。
+    * 编写单元测试 (Unit Tests) 覆盖核心业务逻辑、工具函数、模型方法。
+    * 编写集成测试 (Integration Tests) 测试 API 端点的功能和流程。
+    * 测试代码存放于 `/tests` 目录，结构与 `app` 目录对应。
+    * 鼓励测试驱动开发 (TDD)。
+    * 在 CI 流程中集成自动化测试。
+* **3.9 安全性 (Security):**
+    * 对所有外部输入 (请求参数、Body) 进行严格校验 (可使用 Marshmallow 或 Pydantic)。
+    * 使用安全的认证机制 (如 JWT 或 Session)，并进行严格的授权检查。
+    * ORM 能基本防止 SQL 注入，但仍需注意原始 SQL 查询的风险。
+    * 如果后端渲染模板，需防止 XSS 攻击。
+    * 如果使用基于 Cookie 的 Session，需启用 CSRF 保护。
+    * 依赖库安全：定期检查并更新存在已知漏洞的依赖。
+* **3.10 依赖管理:**
+    * 使用 `requirements.txt` 文件明确记录所有依赖及其版本。
+    * 定期更新依赖库以获取安全补丁和新特性。
+
+**4. 前端开发规范 (Vue.js 3)**
+
+* **4.1 项目结构:**
+    * 基于 Vite 或 Vue CLI 的标准结构。
+    * 推荐结构:
+        ```
+        /project-root
+        |-- public/
+        |-- src/
+        |   |-- assets/             # 静态资源 (图片, 字体等)
+        |   |-- components/         # 可复用 UI 组件 (按功能或类型组织)
+        |   |   |-- common/         # 通用基础组件
+        |   |   `-- feature/        # 特定功能组件
+        |   |-- views/ / pages/     # 页面级组件 (对应路由)
+        |   |-- router/             # 路由配置 (index.js)
+        |   |-- store/              # Pinia 状态管理 (按模块划分)
+        |   |   |-- index.js
+        |   |   `-- modules/
+        |   |       |-- auth.js
+        |   |       `-- product.js
+        |   |-- services/ / api/    # API 请求封装
+        |   |   |-- index.js        # Axios 实例配置
+        |   |   `-- modules/
+        |   |       |-- auth.js
+        |   |       `-- product.js
+        |   |-- styles/ / css/      # 全局样式, 变量等
+        |   |-- utils/              # 工具函数
+        |   |-- App.vue             # 根组件
+        |   `-- main.js             # 应用入口
+        |-- tests/                  # 测试代码 (unit, e2e)
+        |-- .env.* # 环境变量
+        |-- index.html
+        |-- package.json
+        |-- vite.config.js / vue.config.js
+        `-- ... (lint, prettier config files)
+        ```
+* **4.2 编码风格:**
+    * 严格遵守 **Vue.js 官方风格指南 (v3)**。
+    * 使用 `ESLint` (配合 `eslint-plugin-vue`) 进行代码检查。
+    * 使用 `Prettier` 进行代码格式化。配置编辑器保存时自动格式化，并在 CI 中集成检查。
+* **4.3 命名约定:**
+    * **组件:** 文件名和模板中使用 `PascalCase` (`UserProfile.vue`, `<UserProfile />`)。保持统一。
+    * **变量/函数:** `camelCase`。
+    * **常量:** `UPPER_SNAKE_CASE`。
+    * **Pinia Stores:** `useXxxStore` (例如 `useAuthStore`)。
+    * 命名应清晰、具有描述性。
+* **4.4 组件设计:**
+    * 优先使用 **Composition API** 和 `<script setup>` 语法。
+    * 遵循"高内聚，低耦合"原则，设计小型、单一职责、可复用的组件。
+    * 使用 `defineProps` 定义 Props，并**必须**指定类型，尽可能提供默认值和校验。
+    * 使用 `defineEmits` 定义组件触发的事件。
+    * 避免直接修改 Prop，遵循单向数据流。
+    * 对于复杂的、跨多层级的状态共享，使用 Pinia。
+* **4.5 状态管理 (Pinia):**
+    * 按功能模块划分 Store (`src/store/modules/`)。
+    * State 应尽量扁平化。
+    * 使用 Getters 计算派生状态。
+    * 使用 Actions 执行异步操作或封装多个 state 变更。
+    * **严禁**在组件中直接修改 Store 的 State (除 Actions 外)。
+* **4.6 路由 (Vue Router):**
+    * 在 `src/router/index.js` 中集中管理路由。
+    * 页面组件 (Views/Pages) 使用**路由懒加载** (`() => import('@/views/xxx.vue')`) 提高首屏加载速度。
+    * 使用路由守卫 (`beforeEach`, `beforeEnter`) 处理页面访问权限控制。
+* **4.7 API 请求:**
+    * 在 `src/services/` (或 `src/api/`) 目录下封装 API 请求。
+    * 创建 Axios 实例 (`src/services/index.js`)，配置 baseURL、超时时间、请求/响应拦截器 (如添加 Token、统一错误处理)。
+    * 每个模块的 API 封装在单独的文件中 (如 `src/services/modules/product.js`)。
+    * 在组件中调用 Service 函数获取数据，并处理加载 (loading)、成功 (success)、失败 (error) 三种状态。
+* **4.8 样式 (Styling):**
+    * 默认使用组件的 `<style scoped>` 防止全局样式污染。
+    * 对于全局样式或可复用样式，可在 `src/styles/` 中定义。
+    * 推荐使用 CSS 预处理器 (如 Sass/SCSS) 配合 CSS 变量，或使用 Tailwind CSS 等 Utility-First 框架来统一设计规范。
+    * 与 UI/UX 设计师协作，定义设计规范 (Design Tokens: 颜色、字体、间距等)。
+* **4.9 错误处理:**
+    * 在 API 请求封装中统一处理网络错误和业务错误码。
+    * 在组件中优雅地向用户展示错误信息（避免直接暴露技术细节）。
+    * 集成前端错误监控服务 (如 Sentry) 捕获线上运行时错误。
+* **4.10 测试 (Testing):**
+    * 使用 `Vitest` (推荐，与 Vite 集成良好) 或 `Jest` 配合 `Vue Test Utils` 编写单元测试，测试组件、Composable 函数、Pinia Stores。
+    * 使用 `Cypress` 或 `Playwright` 编写 E2E 测试，覆盖关键用户流程（如登录、购物、认养、查看溯源）。
+    * 在 CI 流程中集成自动化测试。
+* **4.11 性能优化:**
+    * 按需加载 (路由懒加载、组件动态导入)。
+    * 合理使用 `v-if` vs `v-show`。
+    * 优化图片资源 (压缩、WebP 格式、懒加载)。
+    * 减少不必要的组件渲染。
+    * 利用浏览器缓存。
+    * 关注打包后的文件大小 (Bundle Size)，使用工具进行分析。
+* **4.12 可访问性 (Accessibility - a11y):**
+    * 使用语义化 HTML 标签。
+    * 确保键盘可导航。
+    * 为表单元素关联 `label`。
+    * 为图片提供 `alt` 属性。
+    * 必要时使用 ARIA 属性。
+* **4.13 依赖管理:**
+    * 使用 `package.json` 管理依赖。
+    * 使用 `npm` 或 `yarn` 安装和管理包。
+    * 定期运行 `npm audit` 或使用 Dependabot 等工具检查并更新存在安全漏洞的依赖。
+
+**5. 文档规范 (Documentation)**
+
+* **代码注释:** 对非直观的、复杂的代码段、函数、类、算法等添加必要的注释。
+* **README.md:**
+    * 项目根目录 `README.md`: 项目简介、技术栈、环境配置、启动步骤、部署说明。
+    * 重要模块/服务目录可包含独立的 `README.md` 介绍其功能和用法。
+* **API 文档:** 后端 API 必须提供文档。推荐使用 Swagger (OpenAPI) 规范，可通过代码注解自动生成 (如 `flask-swagger-ui`, `connexion`)。
+* **组件文档 (可选):** 对于复杂或可复用的前端组件，可使用 Storybook 等工具生成可视化文档和用例。
+
+**6. 代码审查 (Code Review)**
+
+* **目的:** 发现潜在问题、知识共享、确保规范遵循。
+* **流程:** 基于 PR/MR 进行。审查者应关注：
+    * 功能是否按需求实现。
+    * 代码逻辑是否正确、健壮。
+    * 是否遵循开发规范（命名、风格、注释等）。
+    * 是否存在潜在的性能或安全问题。
+    * 测试是否覆盖关键逻辑。
+    * 代码是否清晰、可维护。
+* **态度:** 审查者和被审查者都应保持专业、建设性的态度。
+
+**7. 环境管理 (Environments)**
+
+* **区分环境:** 明确区分 `development` (本地开发), `staging` (预发布/测试 - 如果有), `production` (生产) 环境。
+* **配置分离:** 不同环境的配置项 (数据库连接、API 地址、密钥等) 必须通过环境变量或环境特定的配置文件进行管理。
+* **生产环境:** 必须启用所有性能优化 (如代码压缩、缓存) 和安全加固措施。日志级别应设置为 INFO 或 WARNING。
+
+---
+
+本规范是指导性文件，旨在为团队提供统一遵循的标准。在项目实践中，可根据具体情况进行讨论和适当调整，但任何调整都应经过团队共识并记录在案。

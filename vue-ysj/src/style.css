@@ -1,0 +1,56 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  /* 定义主色调变量 */
+  --primary-color: #fa964bff;
+  /* 也可以定义其他颜色变量，如文字颜色 */
+  --text-color-light: #f0f0f0; /* 浅色文字用于深色背景 */
+  --text-color-dark: #333; /* 深色文字用于浅色背景 */
+  --background-color: #000000; /* 黑色背景 */
+  --card-background: #1a1a1a; /* 卡片等元素的深灰色背景 */
+  --border-color: #444;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  background-color: var(--background-color);
+  color: var(--text-color-light);
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1, h2, h3 {
+ color: var(--primary-color); /* 标题使用主色调 */
+}
+
+a {
+  font-weight: 500;
+  color: var(--primary-color);
+  text-decoration: inherit;
+}
+a:hover {
+  /* 可以定义一个稍微亮一点的主色调 */
+  color: #ffab6f;
+}
+
+/* 移除或注释掉 Vite 的默认按钮等样式，如果不需要的话 */
+/* 例如：
+button {
+  ...
+}
+*/
+
+/* 通用容器样式（可选） */
+.container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 1rem;
+}

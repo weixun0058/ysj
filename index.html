@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>壹世健 - 源自天山的纯净好蜜</title>
+    <!-- 可以在这里引入 CSS 文件 -->
+    <!-- <link rel="stylesheet" href="style.css"> -->
+    <style>
+        /* 临时添加一些基本样式以便预览结构 */
+        body { font-family: sans-serif; line-height: 1.6; margin: 0; padding: 0; color: #333; }
+        header, footer { background-color: #f8f8f8; padding: 1rem 2rem; }
+        nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; }
+        nav a { text-decoration: none; color: #555; }
+        .hero { background-color: #eee; /* 替代轮播图/视频 */ padding: 4rem 2rem; text-align: center; }
+        .hero h1 { color: #b8860b; /* 模拟琥珀色 */ }
+        .features, .products, .entry-points { padding: 2rem; text-align: center; }
+        .features h2, .products h2, .entry-points h2 { margin-bottom: 1.5rem; }
+        .feature-list, .product-list, .entry-list { display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: center; }
+        .feature-item, .product-card, .entry-item { border: 1px solid #ddd; padding: 1rem; border-radius: 4px; width: 250px; background-color: #fff; }
+        .feature-item h3, .product-card h3, .entry-item h3 { margin-top: 0; color: #6b4f0a; }
+        .product-card img { max-width: 100%; height: auto; display: block; margin-bottom: 0.5rem; }
+        .product-card .price { font-weight: bold; color: #c0392b; }
+        .product-card button { background-color: #b8860b; color: white; border: none; padding: 0.5rem 1rem; cursor: pointer; border-radius: 4px; margin-top: 0.5rem; }
+        footer p { text-align: center; font-size: 0.9em; color: #777; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav>
+            <div>壹世健 LOGO</div>
+            <ul>
+                <li><a href="index.html">首页</a></li>
+                <li><a href="#brand-story">品牌研究院</a></li>
+                <li><a href="#products">单花蜜系列</a></li>
+                <li><a href="#gifts">主厨联名礼盒</a></li>
+                <li><a href="#adoption">蜜蜂认养</a></li>
+                <li><a href="#news">动态资讯</a></li>
+                <li><a href="#contact">联系我们</a></li>
+            </ul>
+            <div>
+                <a href="#login">登录/注册</a> |
+                <a href="#cart">购物车</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <!-- F-HP-01: 品牌视觉元素 (轮播图/视频区域) -->
+        <section class="hero hero-section-honey">
+            <h1>天山蜜源地 | 古法慢酿工艺 | 欧盟级质检标准</h1>
+            <!-- F-HP-02: 品牌 Slogan 和核心价值主张 -->
+            <p>塞外本草 · 壹世健：为您奉上源自新疆天山纯净之境的自然馈赠。</p>
+            <!-- 可以在这里放置轮播图或视频 -->
+        </section>
+
+        <!-- F-HP-03: 核心优势展示 -->
+        <section class="features">
+            <h2>核心优势</h2>
+            <div class="feature-list">
+                <div class="feature-item feature-icon-honeycomb">
+                    <h3>地理标志保护</h3>
+                    <p>源自新疆伊犁尼勒克唐布拉，国家认证地理标志保护产区。</p>
+                </div>
+                <div class="feature-item">
+                    <h3>珍稀新疆黑蜂</h3>
+                    <p>由生命力顽强、采蜜品质高的独特新疆黑蜂酿造。</p>
+                </div>
+                <div class="feature-item">
+                    <h3>纯净无污染蜜源</h3>
+                    <p>天山深处，远离污染，万亩天然牧场，四季花开。</p>
+                </div>
+                <div class="feature-item">
+                    <h3>原蜜直出无添加</h3>
+                    <p>遵循自然成熟法则，物理过滤，保留天然活性酶。</p>
+                </div>
+                 <div class="feature-item">
+                    <h3>权威认证</h3>
+                    <p>展示SGS、有机认证等权威背书。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- F-HP-04: 推荐/精选产品展示 -->
+        <section class="products">
+            <h2>精选产品</h2>
+            <div class="product-list">
+                <div class="product-card product-card-premium">
+                     <!-- <img src="images/premium-set.jpg" alt="商务尊享套装"> -->
+                     <h3>商务尊享套装</h3>
+                     <p>含水晶蜜勺+胡桃木礼盒，尽显尊贵。</p>
+                     <p class="price">¥XXX.XX</p>
+                     <button onclick="location.href='#product-detail-premium'">查看详情</button>
+                </div>
+                <div class="product-card">
+                     <!-- <img src="images/monofloral-honey.jpg" alt="单花蜜系列"> -->
+                     <h3>天山雪蜜</h3>
+                     <p>细腻如雪，口感独特，高海拔蜜源。</p>
+                     <p class="price">¥XXX.XX</p>
+                     <button onclick="location.href='#product-detail-snow'">查看详情</button>
+                </div>
+                <div class="product-card">
+                     <!-- <img src="images/rare-honey.jpg" alt="崖蜜"> -->
+                     <h3>稀有崖蜜</h3>
+                     <p>悬崖峭壁间的珍品，数量稀少。</p>
+                     <p class="price">¥XXX.XX</p>
+                     <button onclick="location.href='#product-detail-cliff'">查看详情</button>
+                </div>
+                <!-- 更多产品卡片 -->
+            </div>
+        </section>
+
+        <!-- F-HP-05: 板块入口引导 -->
+        <section class="entry-points">
+            <h2>探索更多</h2>
+             <div class="entry-list">
+                 <div class="entry-item">
+                     <h3>品牌故事</h3>
+                     <p>了解塞外本草与壹世健的缘起与坚守。</p>
+                     <a href="#brand-story">深入了解</a>
+                 </div>
+                 <div class="entry-item">
+                     <h3>蜜蜂认养计划</h3>
+                     <p>成为蜂巢守护者，获取专属溯源与福利。</p>
+                     <a href="#adoption">立即认养</a>
+                 </div>
+                 <div class="entry-item">
+                     <h3>动态资讯</h3>
+                     <p>获取最新品牌动态与蜂蜜知识。</p>
+                     <a href="#news">查看动态</a>
+                 </div>
+                 <div class="entry-item">
+                     <h3>溯源系统</h3>
+                     <p>输入编码，追溯您的蜂蜜之旅。</p>
+                     <a href="#traceability">开始溯源</a>
+                 </div>
+             </div>
+        </section>
+
+        <!-- 可以在此处添加网站规划中提到的其他元素，如信任体系（实时采购量）、AR体验入口等 -->
+
+    </main>
+
+    <!-- F-HP-06: 页脚 -->
+    <footer>
+        <p>&copy; 2025 塞外本草 / 壹世健 保留所有权利.</p>
+        <p>公司地址：新疆伊犁尼勒克地区 | 联系电话：XXX-XXXXXXX | 邮箱：contact@yishijian.com</p>
+        <p>备案号：<a href="https://beian.miit.gov.cn/">京ICP备XXXXXXXX号-X</a></p>
+        <!-- 可以添加其他链接，如隐私政策、服务条款、网站地图 -->
+    </footer>
+
+    <!-- 可以在这里引入 JavaScript 文件 -->
+    <!-- <script src="script.js"></script> -->
+</body>
+</html> 
