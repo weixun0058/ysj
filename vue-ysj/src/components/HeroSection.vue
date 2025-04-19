@@ -1,3 +1,4 @@
+<!-- 首页轮播图 -->
 <template>
   <section class="hero-section">
     <swiper
@@ -205,4 +206,70 @@ const onSlideChange = (swiper) => {
 .cta-button:hover {
   background-color: #ffab6f;
 }
+
+/* 响应式调整 */
+@media (max-width: 960px) {
+  .hero-section {
+    /* height: 400px; */ /* 移除固定高度 */
+    height: 0; /* 设置高度为0，由padding控制 */
+    padding-top: 56.25%; /* 16:9 Aspect Ratio (9 / 16 * 100) */
+    overflow: hidden; /* 确保内容不溢出 */
+  }
+
+  .hero-content-overlay {
+    max-width: 90%; /* 允许内容更宽 */
+    width: 90%; /* 确保宽度 */
+  }
+
+  .hero-content-overlay h1 {
+    font-size: 2rem; /* 减小标题字体 */
+  }
+
+  .hero-content-overlay p {
+    font-size: 1rem; /* 减小段落字体 */
+    margin-bottom: 1rem;
+  }
+
+  /* 调整 Swiper 导航按钮 */
+  :deep(.swiper-button-prev),
+  :deep(.swiper-button-next) {
+    --swiper-navigation-size: 24px; /* 减小按钮大小 */
+    /* 可能需要进一步调整按钮位置，如果它们看起来不合适 */
+    /* 例如：top: 95%; */
+  }
+
+  /* 调整 Swiper 分页器 */
+  :deep(.swiper-pagination-bullet) {
+    width: 8px; /* 减小圆点大小 */
+    height: 8px;
+  }
+
+  .cta-button {
+      padding: 0.6rem 1.5rem;
+      font-size: 0.9rem;
+  }
+
+}
+
+/* 针对更小的屏幕可以进一步调整 */
+@media (max-width: 480px) {
+    /* .hero-section 的高度由上面的 16:9 padding 控制，无需再次设置 */
+    /*
+    .hero-section {
+        height: 350px;
+    }
+    */
+    .hero-content-overlay h1 {
+        font-size: 1.6rem;
+    }
+    .hero-content-overlay p {
+        font-size: 0.9rem;
+    }
+    /* 在非常小的屏幕上可以隐藏导航按钮 */
+    :deep(.swiper-button-prev),
+    :deep(.swiper-button-next) {
+        display: none;
+    }
+}
+
 </style> 

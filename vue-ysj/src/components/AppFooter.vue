@@ -1,3 +1,4 @@
+<!-- 页脚 --> 
 <template>
   <footer class="app-footer">
     <div class="container">
@@ -39,5 +40,17 @@
 
 .app-footer a:hover {
   color: var(--primary-color);
+}
+
+/* 响应式调整 */
+@media (max-width: 960px) {
+  .app-footer {
+    padding: 1.5rem 1rem; /* 减少内边距 */
+    font-size: 0.8em; /* 缩小字体 */
+    margin-top: 2rem; /* 减少与上方距离 */
+  }
+  .app-footer p {
+      line-height: 1.6; /* 调整行高避免文字太挤 */
+  }
 }
 </style> 

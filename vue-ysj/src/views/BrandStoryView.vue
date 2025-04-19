@@ -1,8 +1,10 @@
+<!-- 品牌故事 -->
 <template>
   <div class="brand-story-page">
     <!-- 1. Hero Section -->
     <section class="story-hero">
-      <div class="hero-background" style="background-image: url('/img/story-hero-bg.jpg');"></div> <!-- 替换为实际背景图 -->
+      <!-- <div class="hero-background" style="background-image: url('/img/story-hero-bg.jpg');"></div> --> <!-- 替换为视频 -->
+      <video class="hero-background-video" src="/img/hero-background.mp4" autoplay loop muted playsinline poster="/img/story-hero-bg.jpg"></video>
       <div class="hero-overlay"></div>
       <div class="hero-content container">
         <h1>天山深处的黑黄金<br/>国家地理标志的甜蜜馈赠</h1>
@@ -21,10 +23,22 @@
             <li><i class="icon-flora"></i> 76种药花蜜源：天山雪莲、贝母、党参等赋予蜂蜜独特营养。</li>
             <li><i class="icon-climate"></i> 独特小气候：昼夜温差大，利于糖分积累与风味形成。</li>
           </ul>
-          <img src="/img/geo-logo.png" alt="地理标志保护产品 Logo" class="geo-logo"> <!-- 替换为实际 Logo -->
+          <img src="/img/geo-logo.jpg" alt="地理标志保护产品 Logo" class="geo-logo"> <!-- 替换为实际 Logo -->
         </div>
         <div class="visual-content">
-          <img src="/img/tangbula-map.png" alt="尼勒克唐布拉地图" class="map-image"> <!-- 替换为实际地图图片 -->
+          <!-- <img src="/img/tangbula-map.png" alt="尼勒克唐布拉地图" class="map-image"> --> <!-- 移除旧的图片 -->
+          <!-- 嵌入 Leaflet 地图 -->
+          <div style="height:400px; width:100%; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); overflow: hidden;">
+            <l-map ref="map" v-model:zoom="zoom" :center="center" :use-global-leaflet="false">
+              <l-tile-layer
+                :url="tileLayerUrl"
+                layer-type="base"
+                name="OpenStreetMap"
+                :attribution="tileLayerAttribution"
+              ></l-tile-layer>
+              <l-marker :lat-lng="markerLatLng"></l-marker> <!-- 添加标记 -->
+            </l-map>
+          </div>
           <!-- <img src="/img/geo-cert.jpg" alt="地理标志证书" class="cert-image"> 证书可放画廊 -->
         </div>
       </div>
@@ -109,7 +123,17 @@
 
 <script setup>
 // 如果需要，可以在这里导入子组件或添加逻辑
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue'; // 导入 ref
+// 导入 Leaflet 组件
+import "leaflet/dist/leaflet.css"; // 必须导入 Leaflet CSS
+import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
+
+// 地图配置
+const zoom = ref(9); // 初始缩放级别
+const center = ref([43.6, 83.5]); // 新疆伊犁尼勒克唐布拉大致中心坐标 [纬度, 经度]
+const markerLatLng = ref([43.6, 83.5]); // 标记位置
+const tileLayerUrl = ref("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"); // OpenStreetMap 图层 URL
+const tileLayerAttribution = ref('&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors');
 
 onMounted(() => {
   // 可以在这里设置页面标题
@@ -178,15 +202,30 @@ p {
   text-align: center;
   position: relative;
   color: #fff;
+  overflow: hidden; /* 确保视频不溢出 */
 }
+.story-hero .hero-background-video { /* 修改为 video 的样式 */
+    position: absolute;
+    top: 50%; /* 居中 */
+    left: 50%; /* 居中 */
+    transform: translate(-50%, -50%); /* 精确居中 */
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    z-index: 0;
+    filter: brightness(0.7); /* 保留亮度调整 */
+}
+/* 旧样式注释掉
 .story-hero .hero-background {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     background-size: cover; background-position: center center;
     filter: brightness(0.7);
 }
+*/
 .story-hero .hero-overlay {
      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-     background: linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.1)); /* 底部渐变加深 */
+     /* background: linear-gradient(to top, rgba(0,0,0,0.3), rgba(0,0,0,0.01)); 底部渐变加深 */
      z-index: 1;
 }
 .story-hero .hero-content {
@@ -230,7 +269,7 @@ p {
   max-width: 150px;
   margin-top: 1rem;
 }
-.origin-section .map-image {
+.origin-section .map-image { /* 这个样式可以删掉了，或者保留以防万一回退 */
   width: 100%;
   border-radius: 8px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.2);
@@ -380,7 +419,7 @@ p {
 }
 
 /* Responsive adjustments */
-@media (max-width: 992px) {
+@media (max-width: 992px) { /* 这个断点覆盖了 960px */
   .origin-section .section-content,
   .social-impact-section .section-content {
     grid-template-columns: 1fr; /* Stack columns */
@@ -388,6 +427,7 @@ p {
   .social-impact-section .text-content {
       order: -1; /* Move text above image on mobile */
       text-align: center;
+      margin-bottom: 2rem; /* 增加堆叠后的间距 */
   }
    .social-impact-section h2 {
       text-align: center;
@@ -395,6 +435,37 @@ p {
    .origin-section .visual-content {
       margin-top: 2rem;
    }
+
+   /* 新增：针对 960px 及以下的通用调整 */
+   .story-hero h1 {
+       font-size: 2.8rem; /* 缩小标题 */
+   }
+   .story-hero p {
+       font-size: 1.2rem; /* 缩小段落 */
+   }
+   h2 {
+       font-size: 2.2rem; /* 缩小二级标题 */
+   }
+   .story-section {
+       padding: 4rem 0; /* 减少上下边距 */
+   }
+   .nectar-craft-section .grid-item {
+       padding: 1.5rem; /* 减少卡片内边距 */
+   }
+    .nectar-craft-section .grid-item img {
+       height: 150px; /* 调整图片高度 */
+    }
+    .certificate-gallery img {
+        height: 100px; /* 缩小证书图片 */
+    }
+    .story-cta h3 {
+        font-size: 1.8rem; /* 缩小 CTA 标题 */
+    }
+    .cta-button {
+        padding: 0.7rem 2rem; /* 缩小按钮 */
+        font-size: 1rem;
+    }
+
 }
 
 @media (max-width: 768px) {

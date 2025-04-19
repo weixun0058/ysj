@@ -1,3 +1,4 @@
+  <!-- 精选产品 -->
 <template>
   <section class="products-section container">
     <h2>精选产品</h2>

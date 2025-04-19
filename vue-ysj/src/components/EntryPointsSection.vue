@@ -1,3 +1,4 @@
+<!-- 探索更多 -->
 <template>
   <section class="entry-points-section container">
     <h2>探索更多</h2>

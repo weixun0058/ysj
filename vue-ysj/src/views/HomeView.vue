@@ -22,4 +22,11 @@ import EntryPointsSection from '../components/EntryPointsSection.vue';
 section[id] {
   scroll-margin-top: 80px; /* 根据 Header 高度调整 */
 }
+
+/* 响应式调整 */
+@media (max-width: 960px) {
+  section[id] {
+    scroll-margin-top: 60px; /* 调整移动端滚动边距 */
+  }
+}
 </style> 

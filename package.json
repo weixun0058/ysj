@@ -1,5 +1,14 @@
 {
   "dependencies": {
     "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "scripts": {
+    "dev:frontend": "npm run dev --prefix ./vue-ysj",
+    "dev:backend": "python3 backend/app.py",
+    "dev": "concurrently \"npm:dev:frontend\" \"npm:dev:backend\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
   }
 }
