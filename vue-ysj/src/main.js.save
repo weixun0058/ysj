@@ -1,0 +1,47 @@
+q
+q
+port { createApp } from 'vue'
+import { createPinia } from 'pinia' // 引入 Pinia
+import './style.css' // 导入全局样式一次
+import App from './App.vue'
+import router from './router' // 导入路由配置
+import { useAuthStore } from './stores/auth'; // 导入 auth store
+
+// 引入 Font Awesome 图标库
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+// 导入所有需要的 solid 图标 (如果需要 tree-shaking，可以按需导入)
+// import { fas } from '@fortawesome/free-solid-svg-icons'
+// library.add(fas) // 添加整个 solid 图标集
+
+// 或者按需导入 specific icons
+import { faShoppingCart, faUser, faSearch, faHeart, faPhone, faEnvelope, faMapMarkerAlt, faChevronDown, faBars, faTimes,
+  // 添加AdminLayout.vue中使用的其他图标
+  faLeaf, faAngleRight, faAngleLeft, faTachometerAlt, faUsers, faBox, faNewspaper, faTags, faComments, faCog, faUserShield
+} from '@fortawesome/free-solid-svg-icons'
+library.add(faShoppingCart, faUser, faSearch, faHeart, faPhone, faEnvelope, faMapMarkerAlt, faChevronDown, faBars, faTimes,
+  // 添加AdminLayout.vue中使用的其他图标
+  faLeaf, faAngleRight, faAngleLeft, faTachometerAlt, faUsers, faBox, faNewspaper, faTags, faComments, faCog, faUserShield
+)
+
+const app = createApp(App)
+const pinia = createPinia() // 创建 Pinia 实例
+
+app.use(router) // 使用路由
+app.use(pinia) // 应用 Pinia 插件
+
+// 注册 Font Awesome 组件
+app.component('font-awesome-icon', FontAwesomeIcon)
+
+// 初始化认证状态（使用立即执行的异步函数替代顶级await）
+;(async () => {
+  const authStore = useAuthStore(pinia);
+  try {
+    await authStore.initializeAuth();
+  } catch (error) {
+    console.error("Failed to initialize authentication:", error);
+  } finally {
+    // 确保应用在认证初始化后挂载
+app.mount('#app')
+  }
+})();

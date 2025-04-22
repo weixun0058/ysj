@@ -1,3 +1,4 @@
+/* 自定义 CSS 规则 */
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.6;
@@ -12,6 +13,7 @@
   --background-color: #000000; /* 黑色背景 */
   --card-background: #1a1a1a; /* 卡片等元素的深灰色背景 */
   --border-color: #444;
+  --border-color-light: #666; /* 稍亮的边框色，用于暗背景下的分隔 */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -35,6 +37,7 @@ a {
   font-weight: 500;
   color: var(--primary-color);
   text-decoration: inherit;
+  transition: color 0.3s ease;
 }
 a:hover {
   /* 可以定义一个稍微亮一点的主色调 */
@@ -50,7 +53,7 @@ button {
 
 /* 通用容器样式（可选） */
 .container {
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 0 1rem;
+  max-width: 1100px; /* 或者您希望的最大宽度 */
+  margin: 0 auto; /* 居中 */
+  padding: 0 1rem; /* 两侧留白 */
 }

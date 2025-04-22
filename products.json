@@ -1,0 +1,41 @@
+[
+  {
+    "id": 1,
+    "name": "洋槐蜜槐花蜜",
+    "description": "纯正土蜂蜜 无添加 纯正天然",
+    "price": 36.9,
+    "images": [
+      "/img/products/product_1.jpg",
+      "/img/products/product_2.jpg",
+      "/img/products/product_3.jpg",
+      "/img/products/product_4.jpg"
+    ],
+    "category": "黑蜂蜂蜜"
+  },
+  {
+    "id": 2,
+    "name": "新疆尼勒克黑蜂蜜-精美礼盒装",
+    "description": "",
+    "price": 298.0,
+    "images": [
+      "/img/products/product_1_1.jpg",
+      "/img/products/product_2_1.jpg",
+      "/img/products/product_3.png",
+      "/img/products/product_4_1.jpg",
+      "/img/products/product_5.jpg"
+    ],
+    "category": "礼盒"
+  },
+  {
+    "id": 3,
+    "name": "新疆伊犁河谷夏塔雪蜜",
+    "description": "黑蜂蜂蜜 成熟结晶蜜 新疆特产直发",
+    "price": 49.0,
+    "images": [
+      "/img/products/product_1_2.jpg",
+      "/img/products/product_2.webp",
+      "/img/products/product_3.webp"
+    ],
+    "category": "黑蜂蜂蜜"
+  }
+]

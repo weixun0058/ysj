@@ -10,15 +10,30 @@
         <li><router-link to="/">首页</router-link></li>
         <li><router-link to="/brand-story">品牌故事</router-link></li>
         <li><router-link to="/products">产品中心</router-link></li>
-        <li><router-link to="/gifts">联名礼盒定制</router-link></li>
-        <li><router-link to="/adoption">蜜蜂认养计划</router-link></li>
-        <li><router-link to="/news">最新动态资讯</router-link></li>
+        <li><router-link to="/gifts">联名定制</router-link></li>
+        <li><router-link to="/adoption">认养计划</router-link></li>
+        <li><router-link to="/news">动态资讯</router-link></li>
         <li><router-link to="/contact">联系我们</router-link></li>
       </ul>
       <div class="user-actions">
-        <a href="#login">登录/注册</a>
-        <span class="separator">|</span>
-        <a href="#cart">购物车</a>
+        <template v-if="isAuthenticated">
+          <!-- <router-link to="/user-center">{{ currentUser?.username || '用户中心' }}</router-link> --> 
+          <router-link to="/user-center">欢迎, {{ currentUser?.username || '用户' }}</router-link> <!-- 修改链接指向 /user-center -->
+          <span class="separator">|</span>
+          <!-- 为管理员添加管理后台入口 -->
+          <router-link v-if="currentUser?.is_admin" to="/admin/dashboard" class="admin-link">管理后台</router-link>
+          <span v-if="currentUser?.is_admin" class="separator">|</span>
+          <a href="#" @click.prevent="handleLogout" class="logout-link">退出登录</a>
+          <span class="separator">|</span>
+          <router-link to="/cart">购物车</router-link>
+        </template>
+        <template v-else>
+          <router-link to="/login">登录</router-link>
+          <span class="separator">/</span>
+          <router-link to="/register">注册</router-link>
+          <span class="separator">|</span>
+          <router-link to="/cart">购物车</router-link> <!-- 购物车通常也允许未登录访问 -->
+        </template>
       </div>
       <!-- 移动端菜单按钮 -->
       <button class="mobile-menu-button" @click="toggleMobileMenu">菜单</button>
@@ -34,8 +49,17 @@
         <li><router-link to="/news" @click="closeMobileMenu">最新动态资讯</router-link></li>
         <li><router-link to="/contact" @click="closeMobileMenu">联系我们</router-link></li>
         <li class="mobile-user-actions">
-           <a href="#login" @click="closeMobileMenu">登录/注册</a>
-           <a href="#cart" @click="closeMobileMenu">购物车</a>
+          <template v-if="isAuthenticated">
+            <router-link to="/user-center" @click="closeMobileMenu">用户中心</router-link> <!-- 恢复移动端链接 -->
+            <!-- 移动端也为管理员添加管理后台入口 -->
+            <router-link v-if="currentUser?.is_admin" to="/admin/dashboard" @click="closeMobileMenu" class="admin-link">管理后台</router-link>
+             <a href="#" @click.prevent="handleLogout" class="logout-link">退出登录</a>
+          </template>
+          <template v-else>
+             <router-link to="/login" @click="closeMobileMenu">登录</router-link>
+             <router-link to="/register" @click="closeMobileMenu">注册</router-link>
+          </template>
+           <router-link to="/cart" @click="closeMobileMenu">购物车</router-link>
         </li>
       </ul>
     </div>
@@ -44,6 +68,13 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router'; // 导入 useRouter
+import { useAuthStore } from '../stores/auth'; // 导入 auth store
+import { storeToRefs } from 'pinia'; // 导入 storeToRefs 以保持响应性
+
+const router = useRouter(); // 获取 router 实例
+const authStore = useAuthStore();
+const { isAuthenticated, currentUser } = storeToRefs(authStore); // 使用 storeToRefs 获取响应式状态
 
 const isMobileMenuOpen = ref(false);
 
@@ -53,6 +84,12 @@ const toggleMobileMenu = () => {
 
 const closeMobileMenu = () => {
   isMobileMenuOpen.value = false;
+};
+
+const handleLogout = () => {
+  authStore.logout();
+  closeMobileMenu(); // 如果在移动菜单中登出，也关闭菜单
+  router.push('/login'); // 登出后跳转到登录页
 };
 
 </script>
@@ -105,6 +142,16 @@ nav.container {
 .user-actions a {
   color: var(--text-color-light);
   text-decoration: none;
+}
+
+.admin-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.admin-link:hover {
+  text-decoration: underline;
 }
 
 .separator {
@@ -166,6 +213,19 @@ nav.container {
     font-size: 1rem; /* 可以稍小一点 */
 }
 
+.logout-link {
+  color: var(--text-color-light); /* 保持与其它链接一致 */
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+}
+.logout-link:hover {
+  color: var(--primary-color); /* 悬停效果 */
+}
+
 /* 响应式调整 */
 @media (max-width: 960px) {
   .nav-links,
@@ -177,7 +237,8 @@ nav.container {
     display: block; /* 显示移动端菜单按钮 */
   }
 
-  nav.container {
+  nav.container {justify-content: space-between;
+
     /* 如果需要在移动端调整 Logo 和按钮的位置，可以在这里添加样式 */
     /* 例如： justify-content: space-between; 已经有了 */
   }
