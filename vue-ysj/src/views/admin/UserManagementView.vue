@@ -194,16 +194,16 @@ onMounted(() => {
 h1 {
   font-size: 2rem;
   margin-bottom: 2rem;
-  color: var(--text-color-light);
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .loading-container, .error-container {
   text-align: center;
   margin: 3rem 0;
   padding: 2rem;
-  background-color: var(--card-background);
+  background-color: var(--card-background, #1a1a1a);
   border-radius: 8px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-color, #444);
 }
 
 .error-container {
@@ -213,8 +213,8 @@ h1 {
 .retry-button {
   margin-top: 1rem;
   padding: 0.5rem 1.5rem;
-  background-color: var(--primary-color);
-  color: var(--text-color-dark);
+  background-color: var(--primary-color, #fa964b);
+  color: var(--text-color-dark, #333);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -224,16 +224,16 @@ h1 {
 .user-count {
   margin-bottom: 1rem;
   font-size: 0.9rem;
-  color: var(--text-color-light);
+  color: var(--text-color-light, #f0f0f0);
   opacity: 0.8;
 }
 
 .user-table {
   width: 100%;
   overflow-x: auto;
-  background-color: var(--card-background);
+  background-color: var(--card-background, #1a1a1a);
   border-radius: 8px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-color, #444);
 }
 
 table {
@@ -244,12 +244,13 @@ table {
 th, td {
   padding: 1rem;
   text-align: left;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color, #444);
+  color: var(--text-color-light, #f0f0f0);
 }
 
 th {
   font-weight: bold;
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: rgba(0, 0, 0, 0.2);
 }
 
 tr:last-child td {
@@ -257,12 +258,12 @@ tr:last-child td {
 }
 
 .admin-user {
-  background-color: rgba(var(--primary-color-rgb, 255, 200, 0), 0.1);
+  background-color: rgba(var(--primary-color-rgb, 250, 150, 75), 0.1);
 }
 
 .admin-badge {
-  background-color: var(--primary-color);
-  color: var(--text-color-dark);
+  background-color: var(--primary-color, #fa964b);
+  color: var(--text-color-dark, #333);
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
   font-size: 0.8rem;
@@ -284,9 +285,9 @@ tr:last-child td {
 }
 
 .details-button {
-  background-color: var(--card-background);
-  color: var(--text-color-light);
-  border: 1px solid var(--border-color);
+  background-color: var(--card-background, #1a1a1a);
+  color: var(--text-color-light, #f0f0f0);
+  border: 1px solid var(--border-color, #444);
 }
 
 .details-button:hover {
@@ -294,12 +295,12 @@ tr:last-child td {
 }
 
 .make-admin-button {
-  background-color: var(--primary-color);
-  color: var(--text-color-dark);
+  background-color: var(--primary-color, #fa964b);
+  color: var(--text-color-dark, #333);
 }
 
 .make-admin-button:hover {
-  background-color: rgba(var(--primary-color-rgb, 255, 200, 0), 0.8);
+  background-color: rgba(var(--primary-color-rgb, 250, 150, 75), 0.8);
 }
 
 .remove-admin-button {
@@ -323,7 +324,7 @@ tr:last-child td {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -333,7 +334,7 @@ tr:last-child td {
 .modal-content {
   width: 90%;
   max-width: 500px;
-  background-color: var(--card-background);
+  background-color: var(--card-background, #1a1a1a);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -343,12 +344,13 @@ tr:last-child td {
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color, #444);
 }
 
 .modal-header h2 {
   margin: 0;
   font-size: 1.5rem;
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .close-button {
@@ -356,11 +358,12 @@ tr:last-child td {
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: var(--text-color-light);
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .modal-body {
   padding: 1.5rem;
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .modal-body p {

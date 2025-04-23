@@ -291,221 +291,255 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.manage-news-page {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
+.admin-page {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
 }
 
 h1 {
+  font-size: 2rem;
   margin-bottom: 2rem;
-  color: var(--text-color-light);
-  text-align: center;
+  color: var(--text-color-light, #f0f0f0);
 }
 
-.actions-bar {
+.controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
-.create-btn {
-  display: inline-block;
-  padding: 0.7rem 1.5rem;
-  background-color: var(--primary-color);
-  color: var(--text-color-dark);
+.search-container {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.search-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color, #444);
   border-radius: 4px;
-  text-decoration: none;
+  background-color: var(--card-background, #1a1a1a);
+  color: var(--text-color-light, #f0f0f0);
+}
+
+.search-button {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--primary-color, #fa964b);
+  color: var(--text-color-dark, #333);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
   font-weight: bold;
-  transition: background-color 0.3s;
 }
 
-.create-btn:hover {
-  background-color: var(--primary-color-dark);
+.search-button:hover {
+  background-color: rgba(var(--primary-color-rgb, 250, 150, 75), 0.8);
 }
 
-.search-box {
-  position: relative;
-  width: 300px;
-}
-
-.search-box input {
-  width: 100%;
-  padding: 0.7rem 2.5rem 0.7rem 1rem;
-  border: 1px solid var(--border-color);
+.create-button {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--primary-color, #fa964b);
+  color: var(--text-color-dark, #333);
+  border: none;
   border-radius: 4px;
-  background-color: var(--card-background);
-  color: var(--text-color-light);
+  cursor: pointer;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.search-box i {
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-color-medium);
+.create-button:hover {
+  background-color: rgba(var(--primary-color-rgb, 250, 150, 75), 0.8);
 }
 
-.articles-table {
+.create-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.loading-container, .error-container {
+  text-align: center;
+  margin: 3rem 0;
+  padding: 2rem;
+  background-color: var(--card-background, #1a1a1a);
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #444);
+}
+
+.error-container {
+  color: var(--error-color, #e53935);
+}
+
+.retry-button {
+  margin-top: 1rem;
+  padding: 0.5rem 1.5rem;
+  background-color: var(--primary-color, #fa964b);
+  color: var(--text-color-dark, #333);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.article-count {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-color-light, #f0f0f0);
+  opacity: 0.8;
+}
+
+.article-table-container {
+  overflow-x: auto;
+  background-color: var(--card-background, #1a1a1a);
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #444);
+}
+
+table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 2rem;
-  background-color: var(--card-background);
-  border-radius: 8px;
-  overflow: hidden;
 }
 
-.articles-table th,
-.articles-table td {
+th, td {
   padding: 1rem;
   text-align: left;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color, #444);
+  color: var(--text-color-light, #f0f0f0);
 }
 
-.articles-table th {
-  background-color: rgba(0, 0, 0, 0.1);
+th {
   font-weight: bold;
-  color: var(--text-color-light);
+  background-color: rgba(0, 0, 0, 0.2);
 }
 
-.articles-table td {
-  color: var(--text-color-light);
-}
-
-.articles-table tr:last-child td {
+tr:last-child td {
   border-bottom: none;
 }
 
-.articles-table a {
-  color: var(--primary-color);
-  text-decoration: none;
+tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
-.articles-table a:hover {
-  text-decoration: underline;
+.article-title {
+  font-weight: bold;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.status-badge {
+.article-subtitle {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.7;
+}
+
+.article-date {
+  font-size: 0.9rem;
+}
+
+.article-status {
   display: inline-block;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
   font-size: 0.8rem;
+  font-weight: bold;
 }
 
-.status-badge.published {
-  background-color: rgba(46, 204, 113, 0.2);
-  color: #2ecc71;
+.published {
+  background-color: rgba(46, 125, 50, 0.2);
+  color: #81c784;
 }
 
-.status-badge.draft {
-  background-color: rgba(149, 165, 166, 0.2);
-  color: #95a5a6;
+.draft {
+  background-color: rgba(255, 152, 0, 0.2);
+  color: #ffb74d;
 }
 
-.actions {
+.action-buttons {
   display: flex;
   gap: 0.5rem;
 }
 
-.actions button {
-  padding: 0.4rem 0.8rem;
+.action-button {
+  padding: 0.3rem 0.8rem;
   border: none;
   border-radius: 4px;
-  font-size: 0.8rem;
   cursor: pointer;
+  font-size: 0.8rem;
   transition: background-color 0.3s;
-  white-space: nowrap;
 }
 
-.edit-btn {
-  background-color: rgba(52, 152, 219, 0.2);
-  color: #3498db;
+.edit-button {
+  background-color: var(--primary-color, #fa964b);
+  color: var(--text-color-dark, #333);
 }
 
-.edit-btn:hover {
-  background-color: rgba(52, 152, 219, 0.3);
+.edit-button:hover {
+  background-color: rgba(var(--primary-color-rgb, 250, 150, 75), 0.8);
 }
 
-.toggle-btn.publish {
-  background-color: rgba(46, 204, 113, 0.2);
-  color: #2ecc71;
+.view-button {
+  background-color: var(--card-background, #1a1a1a);
+  color: var(--text-color-light, #f0f0f0);
+  border: 1px solid var(--border-color, #444);
 }
 
-.toggle-btn.unpublish {
-  background-color: rgba(241, 196, 15, 0.2);
-  color: #f1c40f;
+.view-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
-.toggle-btn.publish:hover {
-  background-color: rgba(46, 204, 113, 0.3);
+.delete-button {
+  background-color: #e53935;
+  color: white;
 }
 
-.toggle-btn.unpublish:hover {
-  background-color: rgba(241, 196, 15, 0.3);
-}
-
-.delete-btn {
-  background-color: rgba(231, 76, 60, 0.2);
-  color: #e74c3c;
-}
-
-.delete-btn:hover {
-  background-color: rgba(231, 76, 60, 0.3);
+.delete-button:hover {
+  background-color: #c62828;
 }
 
 .pagination {
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: 1rem;
   margin-top: 2rem;
+  gap: 0.5rem;
 }
 
-.pagination button {
+.pagination-button {
   padding: 0.5rem 1rem;
-  background-color: var(--primary-color-light);
-  color: var(--primary-color);
-  border: none;
+  border: 1px solid var(--border-color, #444);
+  background-color: var(--card-background, #1a1a1a);
+  color: var(--text-color-light, #f0f0f0);
   border-radius: 4px;
   cursor: pointer;
 }
 
-.pagination button:disabled {
+.pagination-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.pagination span {
-  color: var(--text-color-medium);
+.pagination-button.active {
+  background-color: var(--primary-color, #fa964b);
+  color: var(--text-color-dark, #333);
+  border-color: var(--primary-color, #fa964b);
 }
 
-.loading,
-.error,
-.no-articles {
-  text-align: center;
-  padding: 3rem;
-  color: var(--text-color-medium);
-}
-
-.error {
-  color: #e74c3c;
-}
-
-.no-articles {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-/* 删除确认对话框 */
-.modal-overlay {
+/* 删除确认弹窗 */
+.delete-modal {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100%;
+  height: 100%;
   background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
@@ -513,66 +547,94 @@ h1 {
   z-index: 1000;
 }
 
-.modal-dialog {
-  background-color: var(--card-background);
+.modal-content {
+  width: 90%;
+  max-width: 500px;
+  background-color: var(--card-background, #1a1a1a);
   border-radius: 8px;
-  padding: 2rem;
-  width: 400px;
-  max-width: 90%;
+  overflow: hidden;
 }
 
-.modal-dialog h3 {
-  margin-top: 0;
-  color: #e74c3c;
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color, #444);
 }
 
-.modal-actions {
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--text-color-light, #f0f0f0);
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-color-light, #f0f0f0);
+}
+
+.modal-body {
+  padding: 1.5rem;
+  color: var(--text-color-light, #f0f0f0);
+}
+
+.modal-footer {
+  padding: 1rem;
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  margin-top: 2rem;
+  border-top: 1px solid var(--border-color, #444);
 }
 
-.modal-actions button {
-  padding: 0.7rem 1.5rem;
+.cancel-button {
+  padding: 0.5rem 1.5rem;
+  background-color: transparent;
+  color: var(--text-color-light, #f0f0f0);
+  border: 1px solid var(--border-color, #444);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.confirm-button {
+  padding: 0.5rem 1.5rem;
+  background-color: #e53935;
+  color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 
-.cancel-btn {
-  background-color: #95a5a6;
-  color: white;
-}
-
-.confirm-delete-btn {
-  background-color: #e74c3c;
-  color: white;
-}
-
-/* 操作反馈消息 */
-.action-message {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  padding: 1rem 2rem;
-  border-radius: 4px;
-  animation: fadeIn 0.3s ease;
-  z-index: 900;
-}
-
-.action-message.success {
-  background-color: rgba(46, 204, 113, 0.9);
-  color: white;
-}
-
-.action-message.error {
-  background-color: rgba(231, 76, 60, 0.9);
-  color: white;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-container {
+    width: 100%;
+  }
+  
+  .create-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  th, td {
+    padding: 0.8rem 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .article-title, .article-subtitle {
+    max-width: 150px;
+  }
 }
 </style> 

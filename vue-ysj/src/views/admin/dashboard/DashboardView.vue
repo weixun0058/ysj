@@ -200,12 +200,13 @@ onMounted(() => {
 }
 
 .card {
-  background-color: #fff;
+  background-color: var(--card-background, #1a1a1a);
   border-radius: 8px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .card-icon {
@@ -242,7 +243,8 @@ onMounted(() => {
 
 .card-content h3 {
   font-size: 0.875rem;
-  color: #7f8c8d;
+  color: var(--text-color-light, #f0f0f0);
+  opacity: 0.7;
   margin: 0 0 0.5rem;
 }
 
@@ -250,11 +252,13 @@ onMounted(() => {
   font-size: 1.75rem;
   font-weight: 600;
   margin: 0 0 0.5rem;
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .card-trend {
   font-size: 0.75rem;
-  color: #7f8c8d;
+  color: var(--text-color-light, #f0f0f0);
+  opacity: 0.7;
   margin: 0;
 }
 
@@ -275,16 +279,17 @@ onMounted(() => {
 }
 
 .chart-container {
-  background-color: #fff;
+  background-color: var(--card-background, #1a1a1a);
   border-radius: 8px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .chart-container h3 {
   margin-top: 0;
   margin-bottom: 1rem;
   font-size: 1rem;
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .chart-placeholder {
@@ -292,17 +297,18 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #f8f9fa;
+  background-color: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
-  color: #7f8c8d;
+  color: var(--text-color-light, #f0f0f0);
+  opacity: 0.6;
 }
 
 /* 最新订单样式 */
 .recent-orders {
-  background-color: #fff;
+  background-color: var(--card-background, #1a1a1a);
   border-radius: 8px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .section-header {
@@ -315,10 +321,11 @@ onMounted(() => {
 .section-header h3 {
   margin: 0;
   font-size: 1rem;
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .view-all {
-  color: #3498db;
+  color: var(--primary-color, #fa964b);
   text-decoration: none;
   font-size: 0.875rem;
 }
@@ -336,12 +343,14 @@ onMounted(() => {
 .order-table td {
   padding: 0.75rem 1rem;
   text-align: left;
-  border-bottom: 1px solid #e6e6e6;
+  border-bottom: 1px solid var(--border-color, #444);
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .order-table th {
   font-weight: 500;
-  color: #7f8c8d;
+  color: var(--text-color-light, #f0f0f0);
+  opacity: 0.7;
   font-size: 0.875rem;
 }
 
@@ -354,27 +363,27 @@ onMounted(() => {
 }
 
 .status-badge.completed {
-  background-color: rgba(46, 204, 113, 0.1);
+  background-color: rgba(46, 204, 113, 0.2);
   color: #2ecc71;
 }
 
 .status-badge.pending {
-  background-color: rgba(243, 156, 18, 0.1);
+  background-color: rgba(243, 156, 18, 0.2);
   color: #f39c12;
 }
 
 .status-badge.shipped {
-  background-color: rgba(52, 152, 219, 0.1);
+  background-color: rgba(52, 152, 219, 0.2);
   color: #3498db;
 }
 
 .status-badge.cancelled {
-  background-color: rgba(231, 76, 60, 0.1);
+  background-color: rgba(231, 76, 60, 0.2);
   color: #e74c3c;
 }
 
 .action-btn {
-  color: #3498db;
+  color: var(--primary-color, #fa964b);
   text-decoration: none;
 }
 
