@@ -14,6 +14,8 @@ import EditNewsView from '../views/admin/EditNewsView.vue';
 import UserManagementView from '../views/admin/UserManagementView.vue';
 // 导入产品管理组件
 import ProductManagementView from '../views/admin/ProductManagementView.vue';
+// 导入网站设置组件
+import SiteSettingsView from '../views/admin/SiteSettingsView.vue';
 // 取消注释这些导入
 import CartView from '../views/CartView.vue';
 import LoginView from '../views/LoginView.vue';
@@ -28,7 +30,8 @@ import TestAuthView from '../views/TestAuthView.vue';
 // 导入管理后台组件
 import AdminLayout from '../layouts/AdminLayout.vue';
 import DashboardView from '../views/admin/dashboard/DashboardView.vue';
-import AdminLoginView from '../views/admin/AdminLoginView.vue';
+// 移除管理员专用登录页导入
+// import AdminLoginView from '../views/admin/AdminLoginView.vue';
 import DevTestView from '../views/admin/DevTestView.vue'; // 导入测试视图
 
 const routes = [
@@ -72,20 +75,6 @@ const routes = [
     path: '/admin/news/create',
     name: 'CreateNews',
     component: CreateNewsView,
-    meta: { requiresAdmin: true }
-  },
-  // 添加用户管理路由
-  {
-    path: '/admin/users',
-    name: 'UserManagement',
-    component: UserManagementView,
-    meta: { requiresAdmin: true }
-  },
-  // 添加产品管理路由
-  {
-    path: '/admin/products',
-    name: 'ProductManagement',
-    component: ProductManagementView,
     meta: { requiresAdmin: true }
   },
   // 取消注释这些路由
@@ -139,13 +128,13 @@ const routes = [
     component: TestAuthView,
   },
   
-  // 管理后台登录路由
-  {
-    path: '/admin/login',
-    name: 'AdminLogin',
-    component: AdminLoginView,
-    meta: { adminLoginPage: true }
-  },
+  // 移除管理员专用登录路由
+  // {
+  //   path: '/admin/login',
+  //   name: 'AdminLogin',
+  //   component: AdminLoginView,
+  //   meta: { adminLoginPage: true }
+  // },
   
   // 管理后台路由组
   {
@@ -166,6 +155,12 @@ const routes = [
         meta: { title: '用户管理' }
       },
       {
+        path: 'products',
+        name: 'AdminProducts',
+        component: ProductManagementView,
+        meta: { title: '产品管理' }
+      },
+      {
         path: 'news/create',
         name: 'AdminCreateNews',
         component: CreateNewsView,
@@ -184,6 +179,13 @@ const routes = [
         component: EditNewsView,
         props: true,
         meta: { title: '编辑文章' }
+      },
+      // 添加网站设置路由
+      {
+        path: 'settings',
+        name: 'SiteSettings',
+        component: SiteSettingsView,
+        meta: { title: '网站设置' }
       },
       // 添加测试视图路由
       {
@@ -230,29 +232,31 @@ router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
   const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin);
   const guestOnly = to.matched.some(record => record.meta.guestOnly);
-  const adminLoginPage = to.matched.some(record => record.meta.adminLoginPage);
   const isAuthenticated = authStore.isAuthenticated; // 从 store 获取登录状态
   const isAdmin = authStore.currentUser?.is_admin; // 获取管理员状态
-
-  // 处理管理员登录页面逻辑
-  if (adminLoginPage) {
-    // 如果已登录且是管理员，直接跳转到管理后台
-    if (isAuthenticated && isAdmin) {
-      return next({ path: '/admin/dashboard' });
-    }
-    // 否则继续访问登录页
-    return next();
-  }
 
   // 处理需要管理员权限的路由
   if (requiresAdmin) {
     if (!isAuthenticated) {
-      // 如果未登录，重定向到管理员登录页
-      return next({ path: '/admin/login' });
+      // 如果未登录，重定向到统一登录页
+      return next({ 
+        path: '/login', 
+        query: { 
+          redirect: to.fullPath,
+          requireAdmin: 'true' // 添加标记，表示需要管理员权限
+        } 
+      });
     } 
     if (!isAdmin) {
-      // 如果登录了但不是管理员，也重定向到管理员登录页
-      return next({ path: '/admin/login' });
+      // 如果登录了但不是管理员，重定向到首页并提示权限不足
+      // 可以考虑添加一个提示页面，或在登录页增加权限提示
+      return next({ 
+        path: '/login', 
+        query: { 
+          accessDenied: 'true',
+          requireAdmin: 'true'
+        }
+      });
     }
     // 验证通过，继续访问
     return next();

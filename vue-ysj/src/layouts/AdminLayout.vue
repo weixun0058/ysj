@@ -6,7 +6,7 @@
       <div class="sidebar-header">
         <div class="logo-container">
           <i class="fas fa-leaf logo-icon"></i>
-          <span v-if="!isSidebarCollapsed" class="brand-name">壹世健管理系统</span>
+          <span v-show="!isSidebarCollapsed" class="brand-name">壹世健管理系统</span>
         </div>
         <button class="toggle-btn" @click="toggleSidebar">
           <i :class="isSidebarCollapsed ? 'fas fa-angle-right' : 'fas fa-angle-left'"></i>
@@ -16,47 +16,47 @@
       <nav class="sidebar-nav">
         <router-link to="/admin/dashboard" class="nav-item">
           <i class="fas fa-tachometer-alt"></i>
-          <span v-if="!isSidebarCollapsed">仪表盘</span>
+          <span v-show="!isSidebarCollapsed">仪表盘</span>
         </router-link>
         
         <router-link to="/admin/users" class="nav-item">
           <i class="fas fa-users"></i>
-          <span v-if="!isSidebarCollapsed">用户管理</span>
+          <span v-show="!isSidebarCollapsed">用户管理</span>
         </router-link>
         
         <router-link to="/admin/products" class="nav-item">
           <i class="fas fa-box"></i>
-          <span v-if="!isSidebarCollapsed">产品管理</span>
+          <span v-show="!isSidebarCollapsed">产品管理</span>
         </router-link>
         
         <router-link to="/admin/news" class="nav-item">
           <i class="fas fa-newspaper"></i>
-          <span v-if="!isSidebarCollapsed">文章管理</span>
+          <span v-show="!isSidebarCollapsed">文章管理</span>
         </router-link>
         
         <router-link to="/admin/orders" class="nav-item">
           <i class="fas fa-shopping-cart"></i>
-          <span v-if="!isSidebarCollapsed">订单管理</span>
+          <span v-show="!isSidebarCollapsed">订单管理</span>
         </router-link>
         
         <router-link to="/admin/categories" class="nav-item">
           <i class="fas fa-tags"></i>
-          <span v-if="!isSidebarCollapsed">分类管理</span>
+          <span v-show="!isSidebarCollapsed">分类管理</span>
         </router-link>
         
         <router-link to="/admin/comments" class="nav-item">
           <i class="fas fa-comments"></i>
-          <span v-if="!isSidebarCollapsed">评论管理</span>
+          <span v-show="!isSidebarCollapsed">评论管理</span>
         </router-link>
         
         <router-link to="/admin/settings" class="nav-item">
           <i class="fas fa-cog"></i>
-          <span v-if="!isSidebarCollapsed">网站设置</span>
+          <span v-show="!isSidebarCollapsed">网站设置</span>
         </router-link>
         
         <router-link to="/admin/admins" class="nav-item">
           <i class="fas fa-user-shield"></i>
-          <span v-if="!isSidebarCollapsed">管理员</span>
+          <span v-show="!isSidebarCollapsed">管理员</span>
         </router-link>
       </nav>
     </aside>

@@ -1,7 +1,5 @@
 <template>
   <div class="product-management">
-    <h1>产品管理</h1>
-    
     <!-- 产品列表 -->
     <div class="product-list-section">
       <div class="section-header">
@@ -544,7 +542,7 @@ onMounted(() => {
 .product-management h1 {
   margin-bottom: 2rem;
   font-size: 1.75rem;
-  color: var(--heading-color, #333);
+  color: var(--text-color-light, #f0f0f0);
   border-bottom: 2px solid var(--primary-color, #ff9d4d);
   padding-bottom: 0.5rem;
 }
@@ -559,11 +557,12 @@ onMounted(() => {
 .section-header h2 {
   font-size: 1.25rem;
   margin: 0;
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .btn-primary {
   background-color: var(--primary-color, #ff9d4d);
-  color: white;
+  color: var(--text-color-dark, #333);
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 4px;
@@ -581,9 +580,10 @@ onMounted(() => {
 .loading, .error-message, .empty-state {
   text-align: center;
   padding: 2rem;
-  background-color: white;
+  background-color: var(--card-background, #1a1a1a);
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .error-message {
@@ -591,10 +591,11 @@ onMounted(() => {
 }
 
 .product-table-container {
-  background-color: white;
+  background-color: var(--card-background, #1a1a1a);
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   overflow: auto;
+  border: 1px solid var(--border-color, #444);
 }
 
 .product-table {
@@ -606,13 +607,14 @@ onMounted(() => {
 .product-table td {
   padding: 1rem;
   text-align: left;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color, #444);
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .product-table th {
-  background-color: #f8f9fa;
+  background-color: var(--table-header-background, #252525);
   font-weight: 600;
-  color: #555;
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .product-image-cell {
@@ -624,7 +626,7 @@ onMounted(() => {
   height: 60px;
   object-fit: cover;
   border-radius: 4px;
-  border: 1px solid #eee;
+  border: 1px solid var(--border-color, #444);
 }
 
 .no-image {
@@ -633,11 +635,11 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f8f9fa;
-  color: #aaa;
+  background-color: var(--input-background, #2a2a2a);
+  color: var(--text-color-medium, #a0a0a0);
   font-size: 0.75rem;
   border-radius: 4px;
-  border: 1px solid #eee;
+  border: 1px solid var(--border-color, #444);
 }
 
 .actions-cell {
@@ -657,7 +659,7 @@ onMounted(() => {
 }
 
 .btn-edit {
-  background-color: #4caf50;
+  background-color: var(--success-color, #4caf50);
   color: white;
 }
 
@@ -681,7 +683,7 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -689,13 +691,13 @@ onMounted(() => {
 }
 
 .modal-container {
-  background-color: white;
+  background-color: var(--card-background, #1a1a1a);
   border-radius: 8px;
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .delete-confirm-modal {
@@ -707,12 +709,13 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 1.25rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color, #444);
 }
 
 .modal-header h3 {
   margin: 0;
   font-size: 1.25rem;
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .close-btn {
@@ -720,11 +723,12 @@ onMounted(() => {
   border: none;
   font-size: 1.25rem;
   cursor: pointer;
-  color: #777;
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .modal-content {
   padding: 1.5rem;
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .modal-footer {
@@ -732,7 +736,7 @@ onMounted(() => {
   justify-content: flex-end;
   gap: 0.75rem;
   padding: 1.25rem;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border-color, #444);
 }
 
 .warning {
@@ -753,6 +757,7 @@ onMounted(() => {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .required {
@@ -764,14 +769,16 @@ onMounted(() => {
 .form-group textarea {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color, #444);
   border-radius: 4px;
-  background-color: #f8f9fa;
+  background-color: var(--input-background, #2a2a2a);
   font-size: 1rem;
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .form-group input[type="file"] {
   padding: 0.5rem 0;
+  color: var(--text-color-light, #f0f0f0);
 }
 
 .form-actions {
@@ -790,17 +797,17 @@ onMounted(() => {
 }
 
 .btn-cancel {
-  background-color: #f1f3f5;
-  color: #495057;
+  background-color: var(--neutral-color, #757575);
+  color: white;
 }
 
 .btn-submit {
   background-color: var(--primary-color, #ff9d4d);
-  color: white;
+  color: var(--text-color-dark, #333);
 }
 
 .btn-submit:disabled {
-  background-color: #ddd;
+  background-color: #666;
   cursor: not-allowed;
 }
 
@@ -818,7 +825,7 @@ onMounted(() => {
   height: 80px;
   border-radius: 4px;
   overflow: hidden;
-  border: 1px solid #eee;
+  border: 1px solid var(--border-color, #444);
 }
 
 .preview-item img, .current-image-item img {

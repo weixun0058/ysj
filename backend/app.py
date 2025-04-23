@@ -52,14 +52,24 @@ app.register_blueprint(news_bp)
 # 导入用户管理蓝图
 from user_routes import user_bp
 app.register_blueprint(user_bp)
+# 导入产品管理蓝图
+from product_routes import init_product_routes
+init_product_routes(app)
+# 导入网站设置蓝图
+from settings_routes import settings_bp
+app.register_blueprint(settings_bp)
 # --- 蓝图注册结束 ---
 
 # 路径设置
 BASE_DIR = os.path.abspath(app.static_folder)  # 项目根目录
 IMG_DIR = os.path.join(BASE_DIR, 'img', 'products')
 JSON_PATH = os.path.join(BASE_DIR, 'products.json')
+UPLOADS_DIR = os.path.join(BASE_DIR, 'uploads')
 
+# 确保目录存在
 os.makedirs(IMG_DIR, exist_ok=True)
+os.makedirs(UPLOADS_DIR, exist_ok=True)
+os.makedirs(os.path.join(UPLOADS_DIR, 'settings'), exist_ok=True)
 
 # 加载产品数据
 if os.path.exists(JSON_PATH):
@@ -123,84 +133,6 @@ def index():
     # os.path.abspath(os.path.join(app.static_folder)) 获取项目根目录的绝对路径
     return send_from_directory(os.path.abspath(app.static_folder), 'index.html')
 
-@app.route('/api/products', methods=['GET'])
-def get_products():
-    return jsonify({"products": PRODUCTS})
-
-@app.route('/api/products', methods=['POST'])
-def add_product():
-    """接收表单和图片，新增产品"""
-    # 数据字段
-    name = (request.form.get('name') or '').strip()
-    description = (request.form.get('description') or '').strip()
-    price = float(request.form.get('price') or 0)
-    category = (request.form.get('category') or '').strip()
-
-    if not name or price <= 0:
-        return jsonify({"error": "名称和价格必填且价格>0"}), 400
-
-    # 保存图片
-    images = _save_uploaded_images(request.files.getlist('images'), name)
-
-    new_id = max((p['id'] for p in PRODUCTS), default=0) + 1
-    PRODUCTS.append({
-        "id": new_id,
-        "name": name,
-        "description": description,
-        "price": price,
-        "images": images,
-        "category": category
-    })
-    _save_products()
-    return jsonify({"message": "产品已添加", "id": new_id})
-
-@app.route('/api/products/<int:pid>', methods=['GET'])
-def get_product_detail(pid: int):
-    """根据 ID 返回单个产品详情"""
-    product = next((p for p in PRODUCTS if p['id'] == pid), None)
-    if not product:
-        return jsonify({"error": "产品不存在"}), 404
-    return jsonify({"product": product})
-
-@app.route('/api/products/<int:pid>', methods=['POST'])
-def update_product(pid: int):
-    """更新已有产品信息，表单同 add_product"""
-    product = next((p for p in PRODUCTS if p['id'] == pid), None)
-    if not product:
-        return jsonify({"error": "产品不存在"}), 404
-
-    name = (request.form.get('name') or '').strip()
-    description = (request.form.get('description') or '').strip()
-    price = request.form.get('price')
-    category = (request.form.get('category') or '').strip()
-
-    if name:
-        product['name'] = name
-    if description:
-        product['description'] = description
-    if price is not None and price != '':
-        product['price'] = float(price)
-    if category:
-        product['category'] = category
-
-    # 新上传的图片追加
-    if request.files.getlist('images'):
-        product.setdefault('images', []).extend(_save_uploaded_images(request.files.getlist('images'), product.get('name', 'product')))
-
-    _save_products()
-    return jsonify({"message": "产品已更新"})
-
-@app.route('/api/products/<int:pid>/delete', methods=['POST'])
-def delete_product(pid: int):
-    """删除产品"""
-    global PRODUCTS
-    new_list = [p for p in PRODUCTS if p['id'] != pid]
-    if len(new_list) == len(PRODUCTS):
-        return jsonify({"error": "产品不存在"}), 404
-    PRODUCTS = new_list
-    _save_products()
-    return jsonify({"message": "产品已删除"})
-
 @app.route('/admin/upload-product')
 def upload_product_form():
     """HTML 页面: 新增产品表单 + 现有产品编辑"""
@@ -244,6 +176,128 @@ def upload_product_form():
       {''.join(rows)}
     </body></html>"""
     return html
+
+# 添加直接处理/api/products路由的GET请求的函数
+@app.route('/api/products', methods=['GET'])
+def get_products():
+    """获取产品列表，支持分类筛选和推荐标记筛选"""
+    category = request.args.get('category')
+    featured = request.args.get('featured')
+    
+    result = PRODUCTS
+    
+    # 根据分类筛选
+    if category:
+        result = [p for p in result if p.get('category') == category]
+    
+    # 根据推荐标记筛选
+    if featured and featured.lower() == 'true':
+        result = [p for p in result if p.get('is_featured')]
+    
+    return jsonify({"products": result})
+
+# 添加直接处理/api/products路由的POST请求的函数
+@app.route('/api/products', methods=['POST'])
+def add_product():
+    """添加新产品"""
+    if not request.form:
+        return jsonify({"error": "表单数据不能为空"}), 400
+    
+    try:
+        # 获取最大ID，为新产品分配ID
+        max_id = max([p.get('id', 0) for p in PRODUCTS], default=0)
+        new_id = max_id + 1
+        
+        # 创建新产品记录
+        product = {
+            "id": new_id,
+            "name": request.form.get('name', '').strip(),
+            "description": request.form.get('description', '').strip(),
+            "price": float(request.form.get('price', 0)),
+            "category": request.form.get('category', '').strip(),
+            "images": []
+        }
+        
+        # 检查必填项
+        if not product['name']:
+            return jsonify({"error": "产品名称不能为空"}), 400
+            
+        # 处理上传的图片
+        if 'images' in request.files:
+            image_files = request.files.getlist('images')
+            if image_files and any(f.filename for f in image_files):
+                product['images'] = _save_uploaded_images(image_files, product['name'])
+        
+        # 添加到产品列表并保存
+        PRODUCTS.append(product)
+        _save_products()
+        
+        # 返回成功信息
+        return jsonify({"message": "产品添加成功", "product": product}), 201
+        
+    except Exception as e:
+        return jsonify({"error": f"添加产品失败: {str(e)}"}), 500
+
+# 处理产品更新请求
+@app.route('/api/products/<int:pid>', methods=['POST'])
+def update_product(pid):
+    """更新现有产品"""
+    # 查找产品
+    product = next((p for p in PRODUCTS if p['id'] == pid), None)
+    if not product:
+        return jsonify({"error": "产品不存在"}), 404
+    
+    try:
+        # 更新产品信息
+        product['name'] = request.form.get('name', product['name']).strip()
+        product['description'] = request.form.get('description', product['description']).strip()
+        product['price'] = float(request.form.get('price', product['price']))
+        product['category'] = request.form.get('category', product.get('category', '')).strip()
+        
+        # 处理新上传的图片
+        if 'images' in request.files:
+            image_files = request.files.getlist('images')
+            if image_files and any(f.filename for f in image_files):
+                new_images = _save_uploaded_images(image_files, product['name'])
+                # 添加到现有图片列表
+                if 'images' not in product:
+                    product['images'] = []
+                product['images'].extend(new_images)
+        
+        # 保存更改
+        _save_products()
+        
+        return jsonify({"message": "产品更新成功", "product": product})
+        
+    except Exception as e:
+        return jsonify({"error": f"更新产品失败: {str(e)}"}), 500
+
+# 处理产品删除请求
+@app.route('/api/products/<int:pid>/delete', methods=['POST'])
+def delete_product(pid):
+    """删除产品"""
+    global PRODUCTS
+    
+    # 查找产品
+    product = next((p for p in PRODUCTS if p['id'] == pid), None)
+    if not product:
+        return jsonify({"error": "产品不存在"}), 404
+    
+    try:
+        # 从列表中移除产品
+        PRODUCTS = [p for p in PRODUCTS if p['id'] != pid]
+        _save_products()
+        
+        return jsonify({"message": "产品已删除"})
+        
+    except Exception as e:
+        return jsonify({"error": f"删除产品失败: {str(e)}"}), 500
+
+# 提供上传文件访问的路由
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    """提供上传文件的访问"""
+    return send_from_directory(UPLOADS_DIR, filename)
 
 if __name__ == '__main__':
     # 启动 Flask 开发服务器
