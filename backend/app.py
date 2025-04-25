@@ -15,6 +15,7 @@ from flask_jwt_extended import JWTManager
 import secrets # 用于生成安全的密钥
 from flask_cors import CORS # 导入 CORS
 import sys # 导入 sys 用于打印到 stderr
+from datetime import timedelta
 
 # 创建 Flask 应用实例
 app = Flask(__name__, static_folder='../', static_url_path='')
@@ -29,7 +30,7 @@ CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "*"}}) # 
 # 从环境变量或默认生成密钥
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", secrets.token_hex(32))
 # 可以设置令牌过期时间（例如：15分钟）
-# app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=15) 
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
 jwt = JWTManager(app)
 
 # --- 开始: 添加 JWT 错误处理回调 ---
@@ -124,6 +125,9 @@ app.register_blueprint(product_bp)
 # 导入网站设置蓝图
 from settings_routes import settings_bp
 app.register_blueprint(settings_bp)
+# 注册品牌联名合作蓝图
+from collaboration_routes import collaboration_bp
+app.register_blueprint(collaboration_bp)
 # --- 蓝图注册结束 ---
 
 @app.route('/')

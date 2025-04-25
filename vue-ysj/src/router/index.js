@@ -26,6 +26,7 @@ import RegisterView from '../views/RegisterView.vue';
 import UserCenterView from '../views/UserCenterView.vue'; // 导入用户中心视图
 import { useAuthStore } from '../stores/auth'; // 导入 auth store
 import TestAuthView from '../views/TestAuthView.vue';
+import BrandCollaborationView from '../views/BrandCollaborationView.vue'; // 导入联名合作页面
 
 // 导入管理后台组件
 import AdminLayout from '../layouts/AdminLayout.vue';
@@ -48,6 +49,13 @@ const routes = [
     component: BrandStoryView,
     // 可以在这里添加路由元信息，例如页面标题
     // meta: { title: '品牌故事 - 壹世健' }
+  },
+  // 添加联名定制页面路由
+  {
+    path: '/brand-collaboration',
+    name: 'BrandCollaboration',
+    component: BrandCollaborationView,
+    meta: { title: '品牌联名合作 - 壹世健' }
   },
   // 启用产品中心路由
   {

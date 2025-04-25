@@ -10,7 +10,7 @@
         <li><router-link to="/">首页</router-link></li>
         <li><router-link to="/brand-story">品牌故事</router-link></li>
         <li><router-link to="/products">产品中心</router-link></li>
-        <li><router-link to="/gifts">联名定制</router-link></li>
+        <li><router-link to="/brand-collaboration">联名定制</router-link></li>
         <li><router-link to="/adoption">认养计划</router-link></li>
         <li><router-link to="/news">动态资讯</router-link></li>
         <li><router-link to="/contact">联系我们</router-link></li>
@@ -44,7 +44,7 @@
         <li><router-link to="/" @click="closeMobileMenu">首页</router-link></li>
         <li><router-link to="/brand-story" @click="closeMobileMenu">品牌故事</router-link></li>
         <li><router-link to="/products" @click="closeMobileMenu">产品中心</router-link></li>
-        <li><router-link to="/gifts" @click="closeMobileMenu">联名礼盒定制</router-link></li>
+        <li><router-link to="/brand-collaboration" @click="closeMobileMenu">联名定制</router-link></li>
         <li><router-link to="/adoption" @click="closeMobileMenu">蜜蜂认养计划</router-link></li>
         <li><router-link to="/news" @click="closeMobileMenu">最新动态资讯</router-link></li>
         <li><router-link to="/contact" @click="closeMobileMenu">联系我们</router-link></li>

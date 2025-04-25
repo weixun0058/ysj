@@ -476,3 +476,101 @@ class StockLog(db.Model):
             
     def __repr__(self):
         return f'<StockLog {self.log_id} product_id={self.product_id} type={self.change_type} amount={self.change_amount}>' 
+
+# 添加品牌联名合作相关的模型
+
+class BrandCollaboration(db.Model):
+    """品牌联名合作申请表"""
+    __tablename__ = 'brand_collaborations'
+
+    id = db.Column(db.Integer, primary_key=True)
+    company_name = db.Column(db.String(100), nullable=False)  # 公司/品牌名称
+    industry = db.Column(db.String(50), nullable=False)  # 行业
+    contact_name = db.Column(db.String(50), nullable=False)  # 联系人姓名
+    position = db.Column(db.String(50))  # 职位
+    email = db.Column(db.String(100), nullable=False)  # 邮箱
+    phone = db.Column(db.String(20), nullable=False)  # 电话
+    product_types = db.Column(db.Text)  # 合作产品类型 (JSON存储)
+    cooperation_type = db.Column(db.String(50))  # 合作类型
+    expected_volume = db.Column(db.String(50))  # 预期年合作额度
+    expected_start_date = db.Column(db.String(50))  # 预期开始日期
+    details = db.Column(db.Text)  # 合作详情
+    status = db.Column(db.String(20), default='pending')  # 状态: pending, processing, approved, rejected, completed
+    is_priority = db.Column(db.Boolean, default=False)  # 是否优先级
+    admin_notes = db.Column(db.Text)  # 管理员备注
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 关联的项目
+    projects = db.relationship('CollaborationProject', backref='collaboration', lazy='dynamic', cascade='all, delete-orphan')
+    
+    def __repr__(self):
+        return f'<BrandCollaboration {self.company_name}>'
+
+class CollaborationProject(db.Model):
+    """联名合作项目表"""
+    __tablename__ = 'collaboration_projects'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    collaboration_id = db.Column(db.Integer, db.ForeignKey('brand_collaborations.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)  # 项目名称
+    description = db.Column(db.Text)  # 项目描述
+    start_date = db.Column(db.Date)  # 开始日期
+    end_date = db.Column(db.Date)  # 结束日期
+    budget = db.Column(db.Float)  # 预算
+    profit_share_model = db.Column(db.String(50))  # 利润分成模式
+    profit_share_percentage = db.Column(db.Float)  # 利润分成比例
+    status = db.Column(db.String(20), default='planning')  # 状态: planning, active, completed, cancelled
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 关联的产品和活动
+    products = db.relationship('CollaborationProduct', backref='project', lazy='dynamic', cascade='all, delete-orphan')
+    activities = db.relationship('CollaborationActivity', backref='project', lazy='dynamic', cascade='all, delete-orphan')
+    
+    def __repr__(self):
+        return f'<CollaborationProject {self.name}>'
+
+class CollaborationProduct(db.Model):
+    """联名合作产品表"""
+    __tablename__ = 'collaboration_products'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('collaboration_projects.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)  # 产品名称
+    product_code = db.Column(db.String(50))  # 产品编码
+    description = db.Column(db.Text)  # 产品描述
+    specifications = db.Column(db.Text)  # 规格
+    pricing = db.Column(db.Float)  # 定价
+    cost = db.Column(db.Float)  # 成本
+    launch_date = db.Column(db.Date)  # 上市日期
+    status = db.Column(db.String(20), default='draft')  # 状态
+    design_files = db.Column(db.Text)  # 设计文件路径 (JSON存储)
+    images = db.Column(db.Text)  # 产品图片路径 (JSON存储)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<CollaborationProduct {self.name}>'
+
+class CollaborationActivity(db.Model):
+    """联名合作营销活动表"""
+    __tablename__ = 'collaboration_activities'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('collaboration_projects.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)  # 活动名称
+    description = db.Column(db.Text)  # 活动描述
+    start_date = db.Column(db.Date)  # 开始日期
+    end_date = db.Column(db.Date)  # 结束日期
+    budget = db.Column(db.Float)  # 预算
+    channels = db.Column(db.Text)  # 营销渠道 (JSON存储)
+    target_audience = db.Column(db.Text)  # 目标受众
+    kpis = db.Column(db.Text)  # KPI指标 (JSON存储)
+    results = db.Column(db.Text)  # 结果数据 (JSON存储)
+    status = db.Column(db.String(20), default='planned')  # 状态
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<CollaborationActivity {self.name}>' 
