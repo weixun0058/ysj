@@ -33,6 +33,8 @@ import DashboardView from '../views/admin/dashboard/DashboardView.vue';
 // 移除管理员专用登录页导入
 // import AdminLoginView from '../views/admin/AdminLoginView.vue';
 import DevTestView from '../views/admin/DevTestView.vue'; // 导入测试视图
+// 导入富文本编辑器测试页面
+import TestEditorView from '../views/admin/TestEditorView.vue';
 
 const routes = [
   {
@@ -128,6 +130,13 @@ const routes = [
     component: TestAuthView,
   },
   
+  // 添加富文本编辑器测试路由
+  {
+    path: '/test-editor',
+    name: 'TestEditor',
+    component: TestEditorView,
+  },
+  
   // 移除管理员专用登录路由
   // {
   //   path: '/admin/login',
@@ -193,6 +202,13 @@ const routes = [
         name: 'DevTest',
         component: DevTestView,
         meta: { title: 'API测试' }
+      },
+      // 添加富文本编辑器测试页面
+      {
+        path: 'test-editor',
+        name: 'AdminTestEditor',
+        component: TestEditorView,
+        meta: { title: '富文本编辑器测试' }
       },
       // 未来会添加更多管理后台路由...
     ]

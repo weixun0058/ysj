@@ -12,8 +12,8 @@
 
       <div class="form-group">
         <label for="content">文章内容</label>
-        <!-- 简单的 textarea，可以替换为富文本编辑器 -->
-        <textarea id="content" v-model="content" rows="15" required placeholder="在此输入文章内容..."></textarea>
+        <!-- 使用新的QuillEditor组件 -->
+        <QuillEditor v-model="content" placeholder="请在此输入文章内容..." height="400px" />
       </div>
 
       <div v-if="errorMessage" class="error-message">
@@ -33,6 +33,8 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { createNews } from '../../api/newsApi'; // 导入API服务
+import QuillEditor from '@/components/admin/QuillEditor.vue'; // 导入Quill富文本编辑器组件
 
 const title = ref('');
 const content = ref('');
@@ -42,6 +44,21 @@ const isLoading = ref(false);
 const router = useRouter();
 
 const handleSubmit = async () => {
+  // 如果已经在提交中，直接返回，避免重复提交
+  if (isLoading.value) return;
+  
+  // 检查内容是否为空
+  if (!content.value || content.value === '<p><br></p>') {
+    errorMessage.value = '文章内容不能为空';
+    return;
+  }
+
+  // 检查标题是否为空
+  if (!title.value.trim()) {
+    errorMessage.value = '文章标题不能为空';
+    return;
+  }
+
   isLoading.value = true;
   errorMessage.value = '';
   successMessage.value = '';
@@ -55,39 +72,29 @@ const handleSubmit = async () => {
     //   return;
     // }
 
-    const response = await fetch('/api/news', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // 'Authorization': `Bearer ${token}` // <-- 发送 JWT token 用于后端验证权限
-      },
-      body: JSON.stringify({
-        title: title.value,
-        content: content.value,
-        // slug: 可选，让后端自动生成
-      }),
+    // 使用API服务创建新文章
+    const data = await createNews({
+      title: title.value,
+      content: content.value,
+      // slug: 可选，让后端自动生成
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || `HTTP error! status: ${response.status}`);
-    }
 
     // 发布成功
     successMessage.value = `文章 "${data.title}" 发布成功！`;
     console.log('文章发布成功:', data);
+    
     // 清空表单
     title.value = '';
     content.value = '';
-    // 可选：跳转到新文章详情页或列表页
-    // router.push({ name: 'NewsDetail', params: { slug: data.slug } });
-    // 或
-    // router.push('/news');
+    
+    // 可选：延迟后跳转到文章管理页
+    setTimeout(() => {
+      router.push({ name: 'ManageNews' });
+    }, 1500);
 
   } catch (error) {
     console.error('文章发布失败:', error);
-    errorMessage.value = error.message || '文章发布失败，请稍后重试。';
+    errorMessage.value = error.response?.data?.error || error.message || '文章发布失败，请稍后重试。';
   } finally {
     isLoading.value = false;
   }
@@ -122,8 +129,7 @@ h1 {
   color: var(--text-color-medium);
 }
 
-.form-group input[type="text"],
-.form-group textarea {
+.form-group input[type="text"] {
   width: 100%;
   padding: 0.8rem 1rem;
   border: 1px solid var(--border-color);
@@ -131,20 +137,13 @@ h1 {
   font-size: 1rem;
   background-color: var(--input-background);
   color: var(--text-color-light);
-  line-height: 1.6; /* 优化 textarea 行高 */
+  line-height: 1.6; /* 优化行高 */
 }
-.form-group input:focus,
-.form-group textarea:focus {
+.form-group input:focus {
    outline: none;
    border-color: var(--primary-color);
    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
 }
-
-textarea {
-    resize: vertical; /* 允许垂直调整大小 */
-    min-height: 200px; /* 设置最小高度 */
-}
-
 
 .error-message {
   color: #e74c3c;

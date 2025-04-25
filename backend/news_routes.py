@@ -107,48 +107,72 @@ def create_news_article():
 
 # 管理员 API 路由 - 获取所有文章（包括草稿）
 @news_bp.route('/admin/news', methods=['GET'])
-@jwt_required()
+@jwt_required() # <-- 恢复 JWT 验证
 def admin_get_all_news():
-    # 检查用户权限
-    current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
-    if not user or not user.is_admin:
-        return jsonify({"error": "权限不足"}), 403
-    
-    # 获取查询参数
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
-    search_query = request.args.get('search', '', type=str)
-    
-    # 构建基础查询
-    query = NewsArticle.query
-    
-    # 如果有搜索查询，添加过滤条件
-    if search_query:
-        query = query.filter(NewsArticle.title.ilike(f'%{search_query}%'))
-    
-    # 按发布日期降序排序并分页
-    pagination = query.order_by(NewsArticle.publish_date.desc())\
-                      .paginate(page=page, per_page=per_page, error_out=False)
-    
-    # 准备返回数据
-    articles_data = [
-        {
-            'id': article.id,
-            'title': article.title,
-            'slug': article.slug,
-            'is_published': article.is_published,
-            'publish_date': article.publish_date.isoformat(),
-            'updated_at': article.updated_at.isoformat()
-        } for article in pagination.items
-    ]
-    
-    return jsonify({
-        'articles': articles_data,
-        'total_pages': pagination.pages,
-        'current_page': pagination.page,
-        'total_items': pagination.total
-    })
+    print("--- ENTERING admin_get_all_news ---", file=sys.stderr) # 恢复日志
+    try:
+        # 检查用户权限
+        current_user_id = get_jwt_identity() # <-- 恢复
+        print(f"[DEBUG] admin_get_all_news: JWT Identity (user_id): {current_user_id}", file=sys.stderr) # 恢复日志
+        
+        user = User.query.get(current_user_id)
+        print(f"[DEBUG] admin_get_all_news: User object from DB: {user}", file=sys.stderr) # 恢复日志
+        
+        if not user:
+            print(f"[ERROR] admin_get_all_news: User with ID {current_user_id} not found in database!", file=sys.stderr) # 恢复日志
+            return jsonify({"error": "用户不存在或令牌无效"}), 401 # 恢复错误码
+            
+        if not user.is_admin:
+            print(f"[WARN] admin_get_all_news: User {current_user_id} is not an admin.", file=sys.stderr)
+            return jsonify({"error": "权限不足"}), 403
+        
+        print(f"[DEBUG] admin_get_all_news: User {current_user_id} is an admin. Proceeding...", file=sys.stderr)
+        
+        # 获取查询参数
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        search_query = request.args.get('search', '', type=str)
+        print(f"[DEBUG] admin_get_all_news: Params - page={page}, per_page={per_page}, search='{search_query}'", file=sys.stderr)
+        
+        # 构建基础查询
+        query = NewsArticle.query
+        
+        # 如果有搜索查询，添加过滤条件
+        if search_query:
+            query = query.filter(NewsArticle.title.ilike(f'%{search_query}%'))
+        
+        # 按发布日期降序排序并分页
+        pagination = query.order_by(NewsArticle.publish_date.desc()) \
+                          .paginate(page=page, per_page=per_page, error_out=False)
+                          
+        print(f"[DEBUG] admin_get_all_news: Pagination total items: {pagination.total}", file=sys.stderr)
+        
+        # 准备返回数据
+        articles_data = [
+            {
+                'id': article.id,
+                'title': article.title,
+                'slug': article.slug,
+                'is_published': article.is_published,
+                'publish_date': article.publish_date.isoformat() if article.publish_date else None, # 处理 None 值
+                'updated_at': article.updated_at.isoformat() if article.updated_at else None # 处理 None 值
+            } for article in pagination.items
+        ]
+        
+        print("--- EXITING admin_get_all_news (Success) ---", file=sys.stderr)
+        return jsonify({
+            'articles': articles_data,
+            'total_pages': pagination.pages,
+            'current_page': pagination.page,
+            'total_items': pagination.total
+        })
+        
+    except Exception as e:
+        # 捕获任何潜在的异常并打印详细信息
+        print(f"[FATAL] Exception in admin_get_all_news: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+        return jsonify({"error": "服务器内部错误"}), 500
 
 # 管理员 API 路由 - 获取单篇文章详情（草稿也可以）
 @news_bp.route('/admin/news/<int:article_id>', methods=['GET'])

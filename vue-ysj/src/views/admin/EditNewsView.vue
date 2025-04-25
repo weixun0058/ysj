@@ -31,7 +31,7 @@
 
       <div class="form-group">
         <label for="content">文章内容</label>
-        <textarea id="content" v-model="content" rows="15" required placeholder="在此输入文章内容..."></textarea>
+        <QuillEditor v-model="content" placeholder="请在此输入文章内容..." height="400px" />
       </div>
 
       <div class="form-row">
@@ -66,12 +66,13 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import axios from 'axios'; // 导入axios
-import { useAuthStore } from '../../stores/auth'; // 导入auth store
+import { useAuthStore } from '../../stores/auth';
+import { getAdminNewsDetail, updateNews } from '../../api/newsApi'; // 导入API服务
+import QuillEditor from '@/components/admin/QuillEditor.vue'; // 导入QuillEditor组件
 
 const router = useRouter();
 const route = useRoute();
-const authStore = useAuthStore(); // 使用auth store
+const authStore = useAuthStore();
 const articleId = route.params.id;
 
 // 表单数据
@@ -95,13 +96,8 @@ const fetchArticle = async () => {
   error.value = '';
   
   try {
-    const response = await axios.get(`/api/admin/news/${articleId}`, {
-      headers: {
-        'Authorization': `Bearer ${authStore.token}`
-      }
-    });
-
-    const article = response.data;
+    // 使用API服务获取文章详情
+    const article = await getAdminNewsDetail(articleId);
     
     // 填充表单数据
     title.value = article.title;
@@ -121,24 +117,29 @@ const fetchArticle = async () => {
 
 // 表单提交
 const handleSubmit = async () => {
+  // 如果已经在提交中，直接返回，避免重复提交
+  if (isSubmitting.value) return;
+  
+  console.log('handleSubmit function called');
   errorMessage.value = '';
   successMessage.value = '';
   isSubmitting.value = true;
 
   try {
-    const response = await axios.put(`/api/admin/news/${articleId}`, {
+    // 检查内容是否为空
+    if (!content.value || content.value === '<p><br></p>') {
+      errorMessage.value = '文章内容不能为空';
+      isSubmitting.value = false;
+      return;
+    }
+    
+    // 使用API服务更新文章
+    const data = await updateNews(articleId, {
       title: title.value,
       content: content.value,
       slug: slug.value || undefined, // 如果为空，后端自动生成
       is_published: isPublished.value
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authStore.token}`
-      }
     });
-
-    const data = response.data;
     
     // 更新表单数据（以防后端有修改）
     slug.value = data.slug;
@@ -149,6 +150,11 @@ const handleSubmit = async () => {
     setTimeout(() => {
       successMessage.value = '';
     }, 3000);
+    
+    // 可选：成功后延迟跳转回列表
+    setTimeout(() => {
+      router.push({ name: 'ManageNews' });
+    }, 1000);
   } catch (err) {
     console.error('更新文章失败:', err);
     errorMessage.value = err.response?.data?.error || err.message || '更新失败，请稍后重试。';
@@ -168,7 +174,14 @@ watch(slug, (newValue) => {
 
 // 返回列表
 const goBack = () => {
-  router.push({ name: 'ManageNews' });
+  console.log('goBack function called');
+  // 使用浏览器原生历史返回，如果是从文章管理页来的
+  if (window.history.length > 1 && document.referrer.includes('admin/news')) {
+    router.back();
+  } else {
+    // 否则直接导航到文章管理页
+    router.push({ name: 'ManageNews' });
+  }
 };
 
 // 初始化
@@ -253,80 +266,76 @@ h1 {
   gap: 0.5rem;
 }
 
-textarea {
-  resize: vertical;
-  min-height: 200px;
-}
-
-.error-message {
-  color: #e74c3c;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-  text-align: center;
-}
-
-.success-message {
-  color: #2ecc71;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-  text-align: center;
-}
-
-.loading, .error {
-  padding: 2rem;
-  text-align: center;
-  font-size: 1.1rem;
-  background-color: var(--card-background);
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-}
-
-.error {
-  color: #e74c3c;
-}
-
 .form-actions {
   display: flex;
   justify-content: space-between;
   margin-top: 2rem;
 }
 
-.cancel-btn,
-.save-btn {
-  padding: 0.8rem 1.5rem;
+.cancel-btn, .save-btn {
+  padding: 0.75rem 1.5rem;
   border-radius: 4px;
-  font-size: 1rem;
-  font-weight: bold;
   cursor: pointer;
+  font-weight: bold;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
 }
 
 .cancel-btn {
-  background-color: #7f8c8d;
-  color: white;
-  border: none;
+  background-color: transparent;
+  color: var(--text-color-light);
+  border: 1px solid var(--border-color);
 }
 
 .cancel-btn:hover {
-  background-color: #95a5a6;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .save-btn {
   background-color: var(--primary-color);
-  color: white;
+  color: var(--text-color-dark);
   border: none;
 }
 
 .save-btn:hover {
-  background-color: #e08743;
+  background-color: var(--primary-color-dark);
 }
 
 .save-btn:disabled {
-  background-color: #d35400;
+  background-color: rgba(var(--primary-color-rgb, 250, 150, 75), 0.5);
   cursor: not-allowed;
-  opacity: 0.7;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.2rem;
+  color: var(--text-color-medium);
+}
+
+.error {
+  text-align: center;
+  padding: 1.5rem;
+  background-color: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+}
+
+.error-message {
+  color: #e74c3c;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem;
+  background-color: rgba(231, 76, 60, 0.1);
+  border-radius: 4px;
+}
+
+.success-message {
+  color: #27ae60;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem;
+  background-color: rgba(39, 174, 96, 0.1);
+  border-radius: 4px;
 }
 </style> 

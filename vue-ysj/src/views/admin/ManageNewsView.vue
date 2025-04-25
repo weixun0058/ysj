@@ -104,10 +104,10 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import axios from 'axios'; // 添加axios导入
-import { useAuthStore } from '../../stores/auth'; // 导入auth store
+import { useAuthStore } from '../../stores/auth'; 
+import { getAdminNewsList, toggleNewsPublishStatus, deleteNews } from '../../api/newsApi'; // 导入新API服务
 
-const authStore = useAuthStore(); // 使用auth store
+const authStore = useAuthStore(); 
 const articles = ref([]);
 const loading = ref(true);
 const error = ref('');
@@ -154,27 +154,11 @@ const fetchArticles = async (page = 1) => {
   loading.value = true;
   error.value = '';
   try {
-    // 构建查询URL，包含分页参数和可能的搜索条件
-    let url = `/api/admin/news`;
-    let params = {
-      page: page,
-      per_page: 10
-    };
-    
-    if (searchQuery.value.trim()) {
-      params.search = searchQuery.value.trim();
-    }
-
-    const response = await axios.get(url, {
-      params: params,
-      headers: {
-        'Authorization': `Bearer ${authStore.token}`
-      }
-    });
-
-    articles.value = response.data.articles;
-    totalPages.value = response.data.total_pages;
-    currentPage.value = response.data.current_page;
+    // 使用API服务获取管理员文章列表
+    const data = await getAdminNewsList(page, 10, searchQuery.value.trim());
+    articles.value = data.articles;
+    totalPages.value = data.total_pages;
+    currentPage.value = data.current_page;
   } catch (err) {
     console.error('获取文章列表失败:', err);
     error.value = err.response?.data?.error || err.message || '无法加载文章列表，请稍后重试。';
@@ -199,22 +183,18 @@ const editArticle = (article) => {
 // 切换发布状态
 const togglePublishStatus = async (article) => {
   try {
-    const response = await axios.put(`/api/admin/news/${article.id}/toggle-publish`, {}, {
-      headers: {
-        'Authorization': `Bearer ${authStore.token}`,
-        'Content-Type': 'application/json'
-      }
-    });
+    // 使用API服务切换文章发布状态
+    const response = await toggleNewsPublishStatus(article.id);
 
     // 更新本地文章状态
     const index = articles.value.findIndex(a => a.id === article.id);
     if (index !== -1) {
-      articles.value[index].is_published = response.data.is_published;
+      articles.value[index].is_published = response.is_published;
     }
 
     // 显示成功消息
     actionSuccess.value = true;
-    actionMessage.value = response.data.is_published ? '文章已发布' : '文章已设为草稿';
+    actionMessage.value = response.is_published ? '文章已发布' : '文章已设为草稿';
     setTimeout(() => {
       actionMessage.value = '';
     }, 3000);
@@ -243,398 +223,313 @@ const cancelDelete = () => {
 // 执行删除
 const deleteArticle = async () => {
   try {
-    const response = await axios.delete(`/api/admin/news/${articleToDelete.value.id}`, {
-      headers: {
-        'Authorization': `Bearer ${authStore.token}`
-      }
-    });
-
-    // 从列表中移除已删除的文章
+    // 使用API服务删除文章
+    await deleteNews(articleToDelete.value.id);
+    
+    // 更新文章列表，删除已删除的文章
     articles.value = articles.value.filter(a => a.id !== articleToDelete.value.id);
     
-    // 显示成功消息
-    actionSuccess.value = true;
-    actionMessage.value = '文章已成功删除';
+    // 如果当前页没有文章了，并且不是第一页，则转到上一页
+    if (articles.value.length === 0 && currentPage.value > 1) {
+      changePage(currentPage.value - 1);
+    }
     
     // 关闭确认对话框
     showDeleteConfirm.value = false;
     articleToDelete.value = null;
     
-    // 3秒后隐藏消息
+    // 显示成功消息
+    actionSuccess.value = true;
+    actionMessage.value = '文章已成功删除';
     setTimeout(() => {
       actionMessage.value = '';
     }, 3000);
-    
-    // 如果删除后没有文章了，检查是否需要更新页数
-    if (articles.value.length === 0 && currentPage.value > 1) {
-      changePage(currentPage.value - 1);
-    }
   } catch (err) {
     console.error('删除文章失败:', err);
     actionSuccess.value = false;
-    actionMessage.value = err.response?.data?.error || err.message || '删除失败，请稍后重试';
-    
-    // 3秒后隐藏消息
+    actionMessage.value = err.response?.data?.error || err.message || '删除文章失败，请稍后重试';
     setTimeout(() => {
       actionMessage.value = '';
     }, 3000);
+    
+    // 关闭确认对话框但保留错误消息
+    showDeleteConfirm.value = false;
   }
 };
 
-// 组件挂载时获取数据
+// 组件挂载时获取文章列表
 onMounted(() => {
-  // 从查询参数获取页码（如果有）
-  const pageFromQuery = parseInt(route.query.page) || 1;
-  fetchArticles(pageFromQuery);
+  fetchArticles();
 });
-
 </script>
 
 <style scoped>
-.admin-page {
-  max-width: 1200px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+.manage-news-page {
+  padding: 1rem;
 }
 
 h1 {
-  font-size: 2rem;
-  margin-bottom: 2rem;
-  color: var(--text-color-light, #f0f0f0);
+  margin-bottom: 1.5rem;
 }
 
-.controls {
+.actions-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-.search-container {
-  display: flex;
-  gap: 0.5rem;
-  flex: 1;
-}
-
-.search-input {
-  flex: 1;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color, #444);
-  border-radius: 4px;
-  background-color: var(--card-background, #1a1a1a);
-  color: var(--text-color-light, #f0f0f0);
-}
-
-.search-button {
-  padding: 0.75rem 1.5rem;
-  background-color: var(--primary-color, #fa964b);
-  color: var(--text-color-dark, #333);
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.search-button:hover {
-  background-color: rgba(var(--primary-color-rgb, 250, 150, 75), 0.8);
-}
-
-.create-button {
-  padding: 0.75rem 1.5rem;
-  background-color: var(--primary-color, #fa964b);
-  color: var(--text-color-dark, #333);
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  display: flex;
+.create-btn {
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.create-button:hover {
-  background-color: rgba(var(--primary-color-rgb, 250, 150, 75), 0.8);
-}
-
-.create-button svg {
-  width: 16px;
-  height: 16px;
-}
-
-.loading-container, .error-container {
-  text-align: center;
-  margin: 3rem 0;
-  padding: 2rem;
-  background-color: var(--card-background, #1a1a1a);
-  border-radius: 8px;
-  border: 1px solid var(--border-color, #444);
-}
-
-.error-container {
-  color: var(--error-color, #e53935);
-}
-
-.retry-button {
-  margin-top: 1rem;
-  padding: 0.5rem 1.5rem;
-  background-color: var(--primary-color, #fa964b);
-  color: var(--text-color-dark, #333);
+  padding: 0.6rem 1rem;
+  background-color: var(--primary-color);
+  color: white;
   border: none;
   border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.article-count {
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-  color: var(--text-color-light, #f0f0f0);
-  opacity: 0.8;
-}
-
-.article-table-container {
-  overflow-x: auto;
-  background-color: var(--card-background, #1a1a1a);
-  border-radius: 8px;
-  border: 1px solid var(--border-color, #444);
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  padding: 1rem;
-  text-align: left;
-  border-bottom: 1px solid var(--border-color, #444);
-  color: var(--text-color-light, #f0f0f0);
-}
-
-th {
-  font-weight: bold;
-  background-color: rgba(0, 0, 0, 0.2);
-}
-
-tr:last-child td {
-  border-bottom: none;
-}
-
-tr:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-.article-title {
-  font-weight: bold;
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.article-subtitle {
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  opacity: 0.7;
-}
-
-.article-date {
-  font-size: 0.9rem;
-}
-
-.article-status {
-  display: inline-block;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: bold;
-}
-
-.published {
-  background-color: rgba(46, 125, 50, 0.2);
-  color: #81c784;
-}
-
-.draft {
-  background-color: rgba(255, 152, 0, 0.2);
-  color: #ffb74d;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.action-button {
-  padding: 0.3rem 0.8rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.8rem;
+  text-decoration: none;
+  font-weight: 500;
   transition: background-color 0.3s;
 }
 
-.edit-button {
-  background-color: var(--primary-color, #fa964b);
-  color: var(--text-color-dark, #333);
+.create-btn:hover {
+  background-color: var(--primary-color-dark);
 }
 
-.edit-button:hover {
-  background-color: rgba(var(--primary-color-rgb, 250, 150, 75), 0.8);
+.search-box {
+  position: relative;
 }
 
-.view-button {
-  background-color: var(--card-background, #1a1a1a);
-  color: var(--text-color-light, #f0f0f0);
-  border: 1px solid var(--border-color, #444);
+.search-box input {
+  padding: 0.6rem 1rem 0.6rem 2.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 250px;
+  font-size: 1rem;
 }
 
-.view-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+.search-box .fas {
+  position: absolute;
+  left: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
 }
 
-.delete-button {
-  background-color: #e53935;
-  color: white;
+.articles-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
 }
 
-.delete-button:hover {
-  background-color: #c62828;
+.articles-table th,
+.articles-table td {
+  padding: 0.8rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.articles-table th {
+  font-weight: 600;
+  color: #333;
+  background-color: #f9f9f9;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status-badge.published {
+  background-color: #e6f7e6;
+  color: #28a745;
+}
+
+.status-badge.draft {
+  background-color: #f8f9fa;
+  color: #6c757d;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.actions button {
+  padding: 0.4rem 0.7rem;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.edit-btn {
+  background-color: #e7f3ff;
+  color: #0275d8;
+}
+
+.edit-btn:hover {
+  background-color: #d0e5ff;
+}
+
+.toggle-btn.publish {
+  background-color: #e6f7e6;
+  color: #28a745;
+}
+
+.toggle-btn.publish:hover {
+  background-color: #d0f0d0;
+}
+
+.toggle-btn.unpublish {
+  background-color: #fff9e6;
+  color: #ffc107;
+}
+
+.toggle-btn.unpublish:hover {
+  background-color: #fff0c0;
+}
+
+.delete-btn {
+  background-color: #ffebee;
+  color: #dc3545;
+}
+
+.delete-btn:hover {
+  background-color: #ffd5da;
+}
+
+.no-articles {
+  padding: 2rem;
+  text-align: center;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.no-articles p {
+  margin-bottom: 1rem;
+  color: #666;
 }
 
 .pagination {
   display: flex;
   justify-content: center;
-  margin-top: 2rem;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 1rem;
 }
 
-.pagination-button {
+.pagination button {
   padding: 0.5rem 1rem;
-  border: 1px solid var(--border-color, #444);
-  background-color: var(--card-background, #1a1a1a);
-  color: var(--text-color-light, #f0f0f0);
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.pagination-button:disabled {
+.pagination button:hover:not(:disabled) {
+  background-color: #e9ecef;
+}
+
+.pagination button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.pagination-button.active {
-  background-color: var(--primary-color, #fa964b);
-  color: var(--text-color-dark, #333);
-  border-color: var(--primary-color, #fa964b);
-}
-
-/* 删除确认弹窗 */
-.delete-modal {
+/* 模态对话框样式 */
+.modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   z-index: 1000;
 }
 
-.modal-content {
-  width: 90%;
-  max-width: 500px;
-  background-color: var(--card-background, #1a1a1a);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-color, #444);
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: var(--text-color-light, #f0f0f0);
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: var(--text-color-light, #f0f0f0);
-}
-
-.modal-body {
+.modal-dialog {
+  background-color: white;
+  border-radius: 6px;
   padding: 1.5rem;
-  color: var(--text-color-light, #f0f0f0);
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.modal-footer {
-  padding: 1rem;
+.modal-dialog h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  border-top: 1px solid var(--border-color, #444);
+  gap: 0.8rem;
+  margin-top: 1.5rem;
 }
 
-.cancel-button {
-  padding: 0.5rem 1.5rem;
-  background-color: transparent;
-  color: var(--text-color-light, #f0f0f0);
-  border: 1px solid var(--border-color, #444);
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.confirm-button {
-  padding: 0.5rem 1.5rem;
-  background-color: #e53935;
-  color: white;
+.modal-actions button {
+  padding: 0.5rem 1rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-weight: 500;
 }
 
-/* 响应式调整 */
-@media (max-width: 768px) {
-  .controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .search-container {
-    width: 100%;
-  }
-  
-  .create-button {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .action-buttons {
-    flex-direction: column;
-  }
-  
-  th, td {
-    padding: 0.8rem 0.5rem;
-    font-size: 0.9rem;
-  }
-  
-  .article-title, .article-subtitle {
-    max-width: 150px;
-  }
+.cancel-btn {
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+.confirm-delete-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.confirm-delete-btn:hover {
+  background-color: #c82333;
+}
+
+/* 操作反馈消息 */
+.action-message {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  z-index: 900;
+  animation: fadeIn 0.3s, fadeOut 0.3s 2.7s;
+}
+
+.action-message.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.action-message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-20px); }
 }
 </style> 

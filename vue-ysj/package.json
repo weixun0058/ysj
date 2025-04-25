@@ -16,6 +16,8 @@
     "@storefront-ui/vue": "^2.6.5",
     "@vue-leaflet/vue-leaflet": "^0.10.1",
     "@vueup/vue-quill": "^1.2.0",
+    "@wangeditor/editor": "^5.1.23",
+    "@wangeditor/editor-for-vue": "^5.1.12",
     "bootstrap": "^5.3.5",
     "leaflet": "^1.9.4",
     "pinia": "^3.0.2",

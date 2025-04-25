@@ -37,9 +37,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRouter, useRoute } from 'vue-router'; // 导入 useRoute 来读取查询参数
-
-console.log('[DEBUG NewsView] Component setup script started.'); // <-- 添加打印 1
+import { useRouter, useRoute } from 'vue-router'; 
+import { getNewsList } from '../api/newsApi'; // 导入新的API服务
 
 const articles = ref([]);
 const loading = ref(true);
@@ -47,10 +46,9 @@ const error = ref('');
 const currentPage = ref(1);
 const totalPages = ref(1);
 const router = useRouter();
-const route = useRoute(); // 获取当前路由信息
+const route = useRoute(); 
 
 const fetchNews = async (page = 1) => {
-  console.log(`[DEBUG NewsView] fetchNews called with page: ${page}`); // <-- 添加打印 2
   loading.value = true;
   error.value = '';
   try {
@@ -58,21 +56,16 @@ const fetchNews = async (page = 1) => {
     const pageFromQuery = parseInt(route.query.page) || page;
     currentPage.value = pageFromQuery;
 
-    console.log(`[DEBUG NewsView] Attempting to fetch /api/news?page=${currentPage.value}&per_page=10`); // <-- 添加打印 3
-
-    const response = await fetch(`/api/news?page=${currentPage.value}&per_page=10`); // 每页显示 10 条
-    if (!response.ok) {
-      throw new Error(`获取资讯列表失败: ${response.statusText}`);
-    }
-    const data = await response.json();
+    // 使用API服务获取新闻列表
+    const data = await getNewsList(currentPage.value, 10); // 每页显示10条
     articles.value = data.news;
     totalPages.value = data.total_pages;
-    currentPage.value = data.current_page; // 使用后端返回的当前页码
+    currentPage.value = data.current_page; 
     document.title = `最新动态资讯 (第 ${currentPage.value} 页) - 壹世健`;
   } catch (err) {
-    console.error('[DEBUG NewsView] Fetch failed:', err); // <-- 添加打印 4 (在 catch 块)
+    console.error('获取新闻列表失败:', err);
     error.value = err.message || '无法加载资讯列表，请稍后重试。';
-     document.title = '最新动态资讯 - 壹世健';
+    document.title = '最新动态资讯 - 壹世健';
   } finally {
     loading.value = false;
   }
@@ -91,19 +84,14 @@ const changePage = (newPage) => {
         // 更新路由查询参数以反映当前页码
         router.push({ query: { page: newPage } });
         // fetchNews 会从 route.query.page 读取新页码
-        // 我们也可以直接调用 fetchNews(newPage)，但在 URL 中反映页码更好
-        fetchNews(newPage); // 可以直接调用，或者依赖路由更新后的 onMounted/watcher
+        fetchNews(newPage);
     }
 }
 
 // 组件挂载时获取第一页数据
 onMounted(() => {
-  console.log('[DEBUG NewsView] onMounted hook called.'); // <-- 添加打印 5
   fetchNews();
 });
-
-// 考虑添加 watch(() => route.query.page, (newPage) => { fetchNews(newPage); });
-// 以便在浏览器前进后退时也能触发数据刷新，但上面 changePage 里直接调用 fetchNews 效果类似
 </script>
 
 <style scoped>

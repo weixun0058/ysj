@@ -23,6 +23,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { getNewsDetail } from '../api/newsApi'; // 导入新的API服务
 
 const route = useRoute();
 const article = ref(null);
@@ -34,20 +35,14 @@ const fetchArticle = async (slug) => {
   error.value = '';
   article.value = null; // 重置文章数据
   try {
-    const response = await fetch(`/api/news/${slug}`);
-    if (!response.ok) {
-        if (response.status === 404) {
-            throw new Error('文章未找到。');
-        }
-      throw new Error(`获取文章失败: ${response.statusText}`);
-    }
-    const data = await response.json();
+    // 使用API服务获取文章详情
+    const data = await getNewsDetail(slug);
     article.value = data;
     document.title = `${data.title} - 壹世健资讯`; // 更新页面标题
   } catch (err) {
     console.error('获取文章详情失败:', err);
     error.value = err.message || '无法加载文章内容，请稍后重试。';
-     document.title = '文章未找到 - 壹世健资讯';
+    document.title = '文章未找到 - 壹世健资讯';
   } finally {
     loading.value = false;
   }

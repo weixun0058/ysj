@@ -71,36 +71,70 @@ export const useAuthStore = defineStore('auth', {
 
     // 2. 登录
     async login(credentials) {
+      console.log('[AuthStore] Attempting login with credentials:', credentials); // 新增日志
       try {
         // 准备发送给后端的数据
         const loginPayload = {
           login: credentials.login || credentials.username, // 支持login或username字段
           password: credentials.password
         };
-        
+
         if (!loginPayload.login || !loginPayload.password) {
           throw new Error("登录标识和密码不能为空");
         }
 
         // 发送登录请求
-        const response = await axios.post('/api/login', loginPayload); 
+        console.log('[AuthStore] Sending login request to /api/login with payload:', loginPayload); // 新增日志
+        const response = await axios.post('/api/login', loginPayload);
+        console.log('[AuthStore] Login response received:', response); // 新增日志
+
+        // --- 开始: 重点检查响应和令牌提取 ---
+        if (!response || !response.data) {
+          console.error('[AuthStore] Login failed: Invalid response received from server.');
+          throw new Error('登录失败：服务器返回无效响应');
+        }
+        console.log('[AuthStore] Login response data:', response.data); // 详细打印响应数据
+
         const { access_token } = response.data;
+        console.log('[AuthStore] Extracted access_token:', access_token ? access_token.substring(0, 15) + '...' : 'undefined'); // 打印提取的令牌
 
         if (access_token) {
           this.token = access_token;
+          console.log('[AuthStore] Saving token to localStorage:', access_token.substring(0, 15) + '...'); // 确认保存
           saveToLocalStorage('authToken', access_token);
           axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-          
-          await this.fetchUser(); 
+          console.log('[AuthStore] Set Axios default header.'); // 确认设置请求头
+
+          // --- 结束: 重点检查响应和令牌提取 ---
+
+          await this.fetchUser();
           if (!this.user) {
-            throw new Error('登录成功但获取用户信息失败');
+             console.error('[AuthStore] Login succeeded but failed to fetch user info.');
+             // 即使获取用户信息失败，也认为登录基本成功，可能只是用户信息接口问题
+             // throw new Error('登录成功但获取用户信息失败'); // 先注释掉，避免因 fetchUser 失败导致登录中断
+             return true; // 返回成功状态
           }
+          console.log('[AuthStore] User info fetched successfully:', this.user);
           return true; // 表示登录成功
         } else {
-          throw new Error('登录失败：服务器返回无效响应（缺少token）');
+          console.error('[AuthStore] Login failed: access_token not found in response data.');
+          throw new Error('登录失败：服务器响应中缺少 access_token');
         }
       } catch (error) {
-        console.error('登录错误:', error.response?.data || error.message);
+        console.error('[AuthStore] Login error caught:', error); // 打印捕获的完整错误
+        // 检查是网络错误还是后端返回的错误
+        if (error.response) {
+          // 请求已发出，但服务器响应状态码不在 2xx 范围
+          console.error('[AuthStore] Login error response data:', error.response.data);
+          console.error('[AuthStore] Login error response status:', error.response.status);
+          console.error('[AuthStore] Login error response headers:', error.response.headers);
+        } else if (error.request) {
+          // 请求已发出，但没有收到响应
+          console.error('[AuthStore] Login error request:', error.request);
+        } else {
+          // 在设置请求时触发了一些错误
+          console.error('[AuthStore] Login setup error message:', error.message);
+        }
         this.logout(); // 登录失败时清除状态
         throw error; // 将错误向上抛出，方便 UI 处理
       }
@@ -211,19 +245,19 @@ export const useAuthStore = defineStore('auth', {
     async fetchPointsRecords(page = 1, perPage = 10) {
       if (!this.isAuthenticated) return null;
       try {
-        const response = await axios.get(`/api/me/points?page=${page}&per_page=${perPage}`);
+        const response = await axios.get(`/api/points-records?page=${page}&per_page=${perPage}`);
         return response.data;
       } catch (error) {
         console.error('获取积分记录错误:', error.response?.data || error.message);
         throw error;
       }
     },
-    
+
     // 9. 获取用户优惠券
-    async fetchCoupons(status = 'valid') {
+    async fetchCoupons(page = 1, perPage = 10) {
       if (!this.isAuthenticated) return null;
       try {
-        const response = await axios.get(`/api/me/coupons?status=${status}`);
+        const response = await axios.get(`/api/coupons?page=${page}&per_page=${perPage}`);
         return response.data;
       } catch (error) {
         console.error('获取优惠券错误:', error.response?.data || error.message);

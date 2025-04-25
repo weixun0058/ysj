@@ -9,11 +9,12 @@ import re
 from dotenv import load_dotenv
 load_dotenv()  # 从.env文件加载环境变量
 # 从 models 导入 db 和 migrate 实例
-from models import db, migrate 
+from models import db, migrate, User # <-- 导入 User 模型
 # 导入 JWT 扩展
 from flask_jwt_extended import JWTManager
 import secrets # 用于生成安全的密钥
 from flask_cors import CORS # 导入 CORS
+import sys # 导入 sys 用于打印到 stderr
 
 # 创建 Flask 应用实例
 app = Flask(__name__, static_folder='../', static_url_path='')
@@ -27,8 +28,59 @@ CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "*"}}) # 
 # --- JWT 配置 ---
 # 从环境变量或默认生成密钥
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", secrets.token_hex(32))
+# 可以设置令牌过期时间（例如：15分钟）
+# app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=15) 
 jwt = JWTManager(app)
-# --- JWT 配置结束 ---
+
+# --- 开始: 添加 JWT 错误处理回调 ---
+@jwt.expired_token_loader
+def expired_token_callback(jwt_header, jwt_payload):
+    print("[JWT ERROR] Expired token received.", file=sys.stderr)
+    return jsonify(error="令牌已过期"), 401 # 返回 401 更符合标准
+
+@jwt.invalid_token_loader
+def invalid_token_callback(error_string):
+    print(f"[JWT ERROR] Invalid token received: {error_string}", file=sys.stderr)
+    # 根据错误类型细化处理
+    if "Signature verification failed" in error_string:
+        return jsonify(error="令牌签名无效"), 422 # 保持 422 如果你想明确区分
+    elif "User claims verification failed" in error_string:
+         return jsonify(error="用户声明验证失败"), 422
+    else:
+        return jsonify(error=f"无效令牌: {error_string}"), 422 # 默认返回 422
+
+@jwt.unauthorized_loader
+def missing_token_callback(error_string):
+    print(f"[JWT ERROR] Missing token: {error_string}", file=sys.stderr)
+    return jsonify(error="请求缺少认证令牌"), 401
+
+@jwt.needs_fresh_token_loader
+def token_not_fresh_callback(jwt_header, jwt_payload):
+    print("[JWT ERROR] Fresh token required.", file=sys.stderr)
+    return jsonify(error="需要刷新令牌"), 401
+
+@jwt.revoked_token_loader
+def revoked_token_callback(jwt_header, jwt_payload):
+    print("[JWT ERROR] Token has been revoked.", file=sys.stderr)
+    return jsonify(error="令牌已被撤销"), 401
+
+@jwt.user_lookup_loader
+def user_lookup_callback(_jwt_header, jwt_data):
+    # 这个回调在 get_current_user() 时被调用，不是 @jwt_required 强制的
+    # 但如果配置了 JWT_USER_LOOKUP_CALLBACK，它需要能正确找到用户
+    identity = jwt_data["sub"]
+    user = User.query.get(identity)
+    print(f"[JWT USER LOOKUP] Looking up user for identity {identity}, found: {user}", file=sys.stderr)
+    return user # 如果找不到用户，返回 None
+
+@jwt.user_lookup_error_loader
+def user_lookup_error_callback(_jwt_header, jwt_data):
+    # 当 user_lookup_callback 返回 None 时触发
+    identity = jwt_data.get("sub")
+    print(f"[JWT USER LOOKUP ERROR] User identity {identity} not found.", file=sys.stderr)
+    return jsonify(error=f"未找到与令牌关联的用户 {identity}"), 404
+
+# --- 结束: 添加 JWT 错误处理回调 ---
 
 # --- 数据库配置 ---
 basedir = os.path.abspath(os.path.dirname(__file__))

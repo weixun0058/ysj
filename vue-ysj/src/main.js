@@ -55,13 +55,17 @@ app.use(Toast, toastOptions);
 
 // 初始化认证状态（使用立即执行的异步函数替代顶级await）
 ;(async () => {
+  console.log('[main.js] Initializing authentication...'); // 新增日志
   const authStore = useAuthStore(pinia);
   try {
     await authStore.initializeAuth();
+    console.log('[main.js] Authentication initialized successfully.'); // 新增日志
   } catch (error) {
-    console.error("Failed to initialize authentication:", error);
+    console.error("[main.js] Failed to initialize authentication:", error); // 修改日志
   } finally {
     // 确保应用在认证初始化后挂载
-app.mount('#app')
+    console.log('[main.js] Mounting the app...'); // 新增日志
+    app.mount('#app');
+    console.log('[main.js] App mounted.'); // 新增日志
   }
 })();
