@@ -12,8 +12,15 @@
           <div class="info-section">
             <h4>账户信息</h4>
             <p><strong>用户名:</strong> {{ currentUser.username }}</p>
-            <p><strong>邮箱:</strong> {{ currentUser.email }}</p>
+            <p><strong>手机号码:</strong> {{ currentUser.phone || '未设置' }}</p>
+            <p><strong>邮箱:</strong> {{ currentUser.email || '未设置' }}</p>
             <p><strong>注册时间:</strong> {{ formatDateTime(currentUser.created_at) }}</p>
+          </div>
+          <div class="info-section">
+            <h4>个人资料</h4>
+            <p><strong>真实姓名:</strong> {{ currentUser.real_name || '未设置' }}</p>
+            <p><strong>性别:</strong> {{ currentUser.gender || '未设置' }}</p>
+            <p><strong>生日:</strong> {{ currentUser.birthday ? formatDate(currentUser.birthday) : '未设置' }}</p>
           </div>
           <div class="actions-section">
             <h4>操作</h4>
@@ -26,8 +33,30 @@
              <h4>修改用户信息</h4>
              <form @submit.prevent="handleUpdateProfile">
                <div class="form-group">
+                 <label for="update-phone">手机号码:</label>
+                 <input type="tel" id="update-phone" v-model="updateData.phone" required pattern="^1[3-9]\d{9}$">
+                 <small>请输入有效的11位手机号码</small>
+               </div>
+               <div class="form-group">
                  <label for="update-email">邮箱:</label>
-                 <input type="email" id="update-email" v-model="updateData.email" required>
+                 <input type="email" id="update-email" v-model="updateData.email">
+               </div>
+               <div class="form-group">
+                 <label for="update-real-name">真实姓名:</label>
+                 <input type="text" id="update-real-name" v-model="updateData.real_name">
+               </div>
+               <div class="form-group">
+                 <label for="update-gender">性别:</label>
+                 <select id="update-gender" v-model="updateData.gender">
+                   <option value="">请选择</option>
+                   <option value="男">男</option>
+                   <option value="女">女</option>
+                   <option value="保密">保密</option>
+                 </select>
+               </div>
+               <div class="form-group">
+                 <label for="update-birthday">生日:</label>
+                 <input type="date" id="update-birthday" v-model="updateData.birthday">
                </div>
                 <div class="form-actions">
                    <SfButton type="submit" :disabled="updateLoading" class="action-button">
@@ -69,6 +98,206 @@
                <p v-if="passwordError" class="error-message">{{ passwordError }}</p>
                <p v-if="passwordSuccess" class="success-message">密码修改成功!</p>
             </form>
+          </div>
+
+          <!-- 会员积分卡片 -->
+          <div class="member-points-card">
+              <h3>会员积分</h3>
+              <div v-if="memberLoading" class="loading-message">正在加载会员信息...</div>
+              <div v-else-if="memberError" class="error-message">加载会员信息失败: {{ memberError }}</div>
+              <div v-else>
+                  <!-- 会员等级与积分展示 -->
+                  <div class="member-level-section">
+                      <div class="level-badge" :class="{ 'vip-badge': isVipMember }">
+                          <span class="level-name">{{ currentUser.member_level ? currentUser.member_level.name : '普通会员' }}</span>
+                      </div>
+                      <div class="points-display">
+                          <div class="current-points">
+                              <span class="points-number">{{ currentUser.points || 0 }}</span>
+                              <span class="points-label">当前积分</span>
+                          </div>
+                          <div v-if="memberLevels.length > 0 && nextLevel" class="next-level-progress">
+                              <div class="progress-text">
+                                  <span>距离 {{ nextLevel.name }} 还需 {{ nextLevelGap }} 积分</span>
+                              </div>
+                              <div class="progress-bar-container">
+                                  <div class="progress-bar" :style="{ width: progressPercentage + '%' }"></div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- 会员权益说明 -->
+                  <div class="member-benefits-section">
+                      <h4>会员权益</h4>
+                      <div class="benefits-grid">
+                          <div class="benefit-item">
+                              <div class="benefit-icon">💰</div>
+                              <div class="benefit-desc">
+                                  {{ isVipMember ? '消费1元=1.5积分' : '消费1元=1积分' }}
+                              </div>
+                          </div>
+                          <div class="benefit-item">
+                              <div class="benefit-icon">🏆</div>
+                              <div class="benefit-desc">累计消费满2000元自动升级为VIP会员</div>
+                          </div>
+                          <div class="benefit-item">
+                              <div class="benefit-icon">🎁</div>
+                              <div class="benefit-desc">积分可兑换专属优惠券</div>
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- 积分明细和优惠券 -->
+                  <div class="points-coupons-tabs">
+                      <div class="tabs-header">
+                          <div 
+                              @click="activeTab = 'points'"
+                              class="tab-item" 
+                              :class="{ 'active-tab': activeTab === 'points' }"
+                          >积分明细</div>
+                          <div 
+                              @click="activeTab = 'coupons'"
+                              class="tab-item" 
+                              :class="{ 'active-tab': activeTab === 'coupons' }"
+                          >我的优惠券</div>
+                      </div>
+                      
+                      <div class="tab-content">
+                          <!-- 积分明细标签页 -->
+                          <div v-if="activeTab === 'points'" class="points-records-container">
+                              <div v-if="pointsLoading" class="loading-message">正在加载积分记录...</div>
+                              <div v-else-if="pointsError" class="error-message">{{ pointsError }}</div>
+                              <div v-else-if="pointsRecords.length === 0" class="no-data-message">
+                                  暂无积分记录
+                              </div>
+                              <div v-else class="points-records-list">
+                                  <div v-for="record in pointsRecords" :key="record.id" class="points-record-item">
+                                      <div class="record-info">
+                                          <div class="record-description">{{ record.description }}</div>
+                                          <div class="record-date">{{ formatDate(record.created_at) }}</div>
+                                      </div>
+                                      <div class="record-points" :class="{ 'positive': record.points > 0, 'negative': record.points < 0 }">
+                                          {{ record.points > 0 ? '+' : '' }}{{ record.points }}
+                                      </div>
+                                  </div>
+                                  
+                                  <!-- 分页控件 -->
+                                  <div v-if="pointsPagination.total > 0" class="pagination-controls">
+                                      <SfButton 
+                                          @click="loadPointsRecords(pointsPagination.page - 1)"
+                                          :disabled="!pointsPagination.has_prev"
+                                          size="sm"
+                                          variant="tertiary"
+                                      >上一页</SfButton>
+                                      <span class="page-info">{{ pointsPagination.page }}/{{ pointsPagination.pages }}</span>
+                                      <SfButton 
+                                          @click="loadPointsRecords(pointsPagination.page + 1)"
+                                          :disabled="!pointsPagination.has_next"
+                                          size="sm"
+                                          variant="tertiary"
+                                      >下一页</SfButton>
+                                  </div>
+                              </div>
+                          </div>
+                          
+                          <!-- 优惠券标签页 -->
+                          <div v-if="activeTab === 'coupons'" class="coupons-container">
+                              <div v-if="couponsLoading" class="loading-message">正在加载优惠券...</div>
+                              <div v-else-if="couponsError" class="error-message">{{ couponsError }}</div>
+                              <div v-else-if="userCoupons.length === 0" class="no-data-message">
+                                  暂无可用优惠券
+                                  <div class="coupon-actions">
+                                      <SfButton @click="openExchangeCoupons" variant="secondary" size="sm">积分兑换优惠券</SfButton>
+                                  </div>
+                              </div>
+                              <div v-else>
+                                  <div class="coupon-status-tabs">
+                                      <span 
+                                          @click="couponStatusFilter = 'valid'"
+                                          :class="{ active: couponStatusFilter === 'valid' }"
+                                      >可用</span>
+                                      <span 
+                                          @click="couponStatusFilter = 'used'"
+                                          :class="{ active: couponStatusFilter === 'used' }"
+                                      >已使用</span>
+                                      <span 
+                                          @click="couponStatusFilter = 'all'"
+                                          :class="{ active: couponStatusFilter === 'all' }"
+                                      >全部</span>
+                                  </div>
+                                  
+                                  <div class="coupons-list">
+                                      <div v-for="coupon in userCoupons" :key="coupon.id" class="coupon-item" :class="{ 'used-coupon': coupon.is_used }">
+                                          <div class="coupon-value">
+                                              <span v-if="coupon.coupon.type === 'percent'">{{ (coupon.coupon.discount_value * 10).toFixed(0) }}折</span>
+                                              <span v-else-if="coupon.coupon.type === 'amount'">¥{{ coupon.coupon.discount_value }}</span>
+                                              <span v-else>{{ coupon.coupon.discount_value }}</span>
+                                          </div>
+                                          <div class="coupon-details">
+                                              <div class="coupon-name">{{ coupon.coupon.name }}</div>
+                                              <div class="coupon-rule" v-if="coupon.coupon.min_purchase > 0">
+                                                  满{{ coupon.coupon.min_purchase }}元可用
+                                              </div>
+                                              <div class="coupon-validity">
+                                                  {{ formatDate(coupon.coupon.start_date) }} 至 {{ formatDate(coupon.coupon.end_date) }}
+                                              </div>
+                                          </div>
+                                          <div class="coupon-status" v-if="coupon.is_used">
+                                              已使用
+                                          </div>
+                                      </div>
+                                  </div>
+                                  
+                                  <div class="coupon-actions">
+                                      <SfButton @click="openExchangeCoupons" variant="secondary" size="sm">积分兑换优惠券</SfButton>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  
+                  <!-- 兑换优惠券弹窗 -->
+                  <div v-if="showExchangeForm" class="exchange-coupon-modal">
+                      <div class="modal-content">
+                          <header class="modal-header">
+                              <h4>积分兑换优惠券</h4>
+                              <SfButton @click="showExchangeForm = false" variant="tertiary" square>X</SfButton>
+                          </header>
+                          <div class="modal-body">
+                              <div class="available-points">
+                                  <span>可用积分：<strong>{{ currentUser.points || 0 }}</strong></span>
+                              </div>
+                              
+                              <div class="exchange-options">
+                                  <div 
+                                      v-for="option in exchangeOptions" 
+                                      :key="option.points"
+                                      class="exchange-option"
+                                      :class="{ 'unavailable': currentUser.points < option.points }"
+                                      @click="selectExchangeOption(option)"
+                                  >
+                                      <div class="option-value">{{ option.name }}</div>
+                                      <div class="option-points">{{ option.points }}积分</div>
+                                      <div v-if="currentUser.points < option.points" class="option-insufficient">
+                                          积分不足
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                          <footer class="modal-footer">
+                              <SfButton @click="showExchangeForm = false" variant="secondary">取消</SfButton>
+                              <SfButton 
+                                  @click="exchangeCoupon"
+                                  :disabled="!selectedExchangeOption || currentUser.points < (selectedExchangeOption?.points || 0) || exchangeLoading"
+                              >
+                                  <span v-if="exchangeLoading">兑换中...</span>
+                                  <span v-else>确认兑换</span>
+                              </SfButton>
+                          </footer>
+                      </div>
+                  </div>
+              </div>
           </div>
         </div>
 
@@ -154,7 +383,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from '../stores/auth';
 import { storeToRefs } from 'pinia';
@@ -169,7 +398,13 @@ const showUpdateForm = ref(false);
 const showPasswordForm = ref(false);
 
 // --- 修改邮箱相关状态 ---
-const updateData = ref({ email: '' });
+const updateData = ref({ 
+  email: '', 
+  phone: '',
+  real_name: '',
+  gender: '',
+  birthday: '' 
+});
 const updateLoading = ref(false);
 const updateError = ref(null);
 const updateSuccess = ref(false);
@@ -199,7 +434,88 @@ const addressFormData = ref({
 const addressFormLoading = ref(false);
 const addressFormError = ref(null);
 
-// --- 获取用户信息 ---
+// --- 会员积分相关状态 ---
+const memberLoading = ref(false);
+const memberError = ref(null);
+const memberLevels = ref([]);
+const activeTab = ref('points');
+const couponStatusFilter = ref('valid');
+
+// 积分记录相关
+const pointsLoading = ref(false);
+const pointsError = ref(null);
+const pointsRecords = ref([]);
+const pointsPagination = ref({
+    total: 0,
+    pages: 1,
+    page: 1,
+    per_page: 10,
+    has_next: false,
+    has_prev: false
+});
+
+// 优惠券相关
+const couponsLoading = ref(false);
+const couponsError = ref(null);
+const userCoupons = ref([]);
+const showExchangeForm = ref(false);
+const exchangeLoading = ref(false);
+const exchangeError = ref(null);
+const selectedExchangeOption = ref(null);
+
+// 预定义的兑换选项
+const exchangeOptions = [
+    { points: 300, name: '95折优惠券', couponType: 'percent', value: 0.95 },
+    { points: 500, name: '9折优惠券', couponType: 'percent', value: 0.9 },
+    { points: 800, name: '85折优惠券', couponType: 'percent', value: 0.85 }
+];
+
+// --- 计算属性 ---
+const isVipMember = computed(() => {
+    return currentUser.value?.member_level?.name === 'VIP会员';
+});
+
+const nextLevel = computed(() => {
+    if (!memberLevels.value.length || !currentUser.value) return null;
+    
+    // 找到当前等级在会员等级列表中的索引
+    const currentLevelId = currentUser.value.member_level?.id || memberLevels.value[0].id;
+    const currentIndex = memberLevels.value.findIndex(level => level.id === currentLevelId);
+    
+    // 如果有下一级，返回下一级别
+    if (currentIndex >= 0 && currentIndex < memberLevels.value.length - 1) {
+        return memberLevels.value[currentIndex + 1];
+    }
+    
+    return null;
+});
+
+const nextLevelGap = computed(() => {
+    if (!nextLevel.value || !currentUser.value) return 0;
+    const gap = nextLevel.value.min_points - (currentUser.value.points || 0);
+    return gap > 0 ? gap : 0;
+});
+
+const progressPercentage = computed(() => {
+    if (!nextLevel.value || !currentUser.value || !currentUser.value.member_level) return 0;
+    
+    const currentLevel = memberLevels.value.find(level => level.id === currentUser.value.member_level.id);
+    if (!currentLevel) return 0;
+    
+    const currentPoints = currentUser.value.points || 0;
+    const levelStart = currentLevel.min_points;
+    const levelEnd = nextLevel.value.min_points;
+    
+    const totalRange = levelEnd - levelStart;
+    const currentProgress = currentPoints - levelStart;
+    
+    if (totalRange <= 0) return 100;
+    
+    const percentage = (currentProgress / totalRange) * 100;
+    return Math.min(Math.max(percentage, 0), 100);
+});
+
+// 获取用户信息 ---
 const fetchUserData = async () => {
   if (!isAuthenticated.value) { error.value = '用户未登录'; return; }
   if (!currentUser.value) {
@@ -212,7 +528,136 @@ const fetchUserData = async () => {
       } catch (err) { error.value = err.message || '获取用户信息时出错'; }
       finally { loading.value = false; }
   }
-  if (currentUser.value) { updateData.value.email = currentUser.value.email; }
+  if (currentUser.value) { 
+    updateData.value.email = currentUser.value.email || '';
+    updateData.value.phone = currentUser.value.phone || '';
+    updateData.value.real_name = currentUser.value.real_name || '';
+    updateData.value.gender = currentUser.value.gender || '';
+    updateData.value.birthday = currentUser.value.birthday || '';
+  }
+};
+
+// --- 获取会员等级 ---
+const fetchMemberLevels = async () => {
+    memberLoading.value = true;
+    memberError.value = null;
+    
+    try {
+        const response = await axios.get('/api/member-levels');
+        memberLevels.value = response.data.member_levels || [];
+    } catch (err) {
+        console.error("获取会员等级失败:", err);
+        memberError.value = err.response?.data?.error || '加载会员等级失败';
+    } finally {
+        memberLoading.value = false;
+    }
+};
+
+// --- 加载积分记录 ---
+const loadPointsRecords = async (page = 1) => {
+    if (!isAuthenticated.value) return;
+    
+    pointsLoading.value = true;
+    pointsError.value = null;
+    
+    try {
+        const response = await axios.get(`/api/me/points?page=${page}`, {
+            headers: { 'Authorization': `Bearer ${token.value}` }
+        });
+        
+        pointsRecords.value = response.data.points_records || [];
+        pointsPagination.value = response.data.pagination || {
+            total: 0,
+            pages: 1,
+            page: 1,
+            per_page: 10,
+            has_next: false,
+            has_prev: false
+        };
+    } catch (err) {
+        console.error("加载积分记录失败:", err);
+        pointsError.value = err.response?.data?.error || '加载积分记录失败';
+    } finally {
+        pointsLoading.value = false;
+    }
+};
+
+// --- 加载用户优惠券 ---
+const loadUserCoupons = async () => {
+    if (!isAuthenticated.value) return;
+    
+    couponsLoading.value = true;
+    couponsError.value = null;
+    
+    try {
+        const response = await axios.get(`/api/me/coupons?status=${couponStatusFilter.value}`, {
+            headers: { 'Authorization': `Bearer ${token.value}` }
+        });
+        
+        userCoupons.value = response.data.coupons || [];
+    } catch (err) {
+        console.error("加载优惠券失败:", err);
+        couponsError.value = err.response?.data?.error || '加载优惠券失败';
+    } finally {
+        couponsLoading.value = false;
+    }
+};
+
+// --- 兑换优惠券相关 ---
+const openExchangeCoupons = () => {
+    selectedExchangeOption.value = null;
+    exchangeError.value = null;
+    showExchangeForm.value = true;
+};
+
+const selectExchangeOption = (option) => {
+    if (currentUser.value.points >= option.points) {
+        selectedExchangeOption.value = option;
+    }
+};
+
+const exchangeCoupon = async () => {
+    if (!selectedExchangeOption.value || !isAuthenticated.value) return;
+    
+    exchangeLoading.value = true;
+    exchangeError.value = null;
+    
+    try {
+        // 假设后端提供了兑换优惠券的API
+        await axios.post('/api/me/exchange-coupon', {
+            points: selectedExchangeOption.value.points,
+            coupon_type: selectedExchangeOption.value.couponType,
+            coupon_value: selectedExchangeOption.value.value
+        }, {
+            headers: { 'Authorization': `Bearer ${token.value}` }
+        });
+        
+        // 成功后关闭弹窗
+        showExchangeForm.value = false;
+        
+        // 刷新数据
+        await authStore.fetchUser(); // 重新获取用户信息以更新积分
+        loadUserCoupons();
+        loadPointsRecords();
+        
+    } catch (err) {
+        console.error("兑换优惠券失败:", err);
+        exchangeError.value = err.response?.data?.error || '兑换优惠券失败';
+    } finally {
+        exchangeLoading.value = false;
+    }
+};
+
+// 监听标签页变化
+const watchTabChanges = () => {
+    // 当切换到优惠券标签页时加载优惠券数据
+    if (activeTab.value === 'coupons') {
+        loadUserCoupons();
+    }
+    // 当切换到积分标签页时加载积分记录
+    else if (activeTab.value === 'points') {
+        loadPointsRecords();
+    }
 };
 
 // --- 获取地址列表 ---
@@ -330,30 +775,89 @@ const setDefaultAddress = async (addressId) => {
 };
 
 onMounted(() => {
-  fetchUserData();
-  fetchAddresses();
+    fetchUserData();
+    fetchAddresses();
+    fetchMemberLevels();
+    loadPointsRecords();
+    
+    // 监听标签页变化
+    watchTabChanges();
+});
+
+// 监听tab的变化
+watch(activeTab, () => {
+    watchTabChanges();
+});
+
+// 监听优惠券状态过滤器变化
+watch(couponStatusFilter, () => {
+    loadUserCoupons();
 });
 
 // --- 修改邮箱逻辑 ---
 const openEditProfileForm = () => {
-    updateData.value.email = currentUser.value.email;
-    updateError.value = null; updateSuccess.value = false;
+    if (currentUser.value) {
+      updateData.value.email = currentUser.value.email || '';
+      updateData.value.phone = currentUser.value.phone || '';
+      updateData.value.real_name = currentUser.value.real_name || '';
+      updateData.value.gender = currentUser.value.gender || '';
+      updateData.value.birthday = currentUser.value.birthday || '';
+    }
+    updateError.value = null; 
+    updateSuccess.value = false;
     showPasswordForm.value = false;
     showUpdateForm.value = true;
 }
 const handleUpdateProfile = async () => {
-  updateLoading.value = true; updateError.value = null; updateSuccess.value = false;
+  updateLoading.value = true; 
+  updateError.value = null; 
+  updateSuccess.value = false;
+  
+  // 验证手机号
+  if (updateData.value.phone) {
+    const phoneRegex = /^1[3-9]\d{9}$/;
+    if (!phoneRegex.test(updateData.value.phone)) {
+      updateError.value = '请输入有效的11位手机号码';
+      updateLoading.value = false;
+      return;
+    }
+  }
+  
   try {
     const profileDataToUpdate = {};
-    if (updateData.value.email !== currentUser.value.email) { profileDataToUpdate.email = updateData.value.email; }
+    
+    // 检查每个字段是否有变化
+    if (updateData.value.email !== currentUser.value.email) { 
+      profileDataToUpdate.email = updateData.value.email; 
+    }
+    if (updateData.value.phone !== currentUser.value.phone) { 
+      profileDataToUpdate.phone = updateData.value.phone; 
+    }
+    if (updateData.value.real_name !== currentUser.value.real_name) { 
+      profileDataToUpdate.real_name = updateData.value.real_name; 
+    }
+    if (updateData.value.gender !== currentUser.value.gender) { 
+      profileDataToUpdate.gender = updateData.value.gender; 
+    }
+    if (updateData.value.birthday !== currentUser.value.birthday) { 
+      profileDataToUpdate.birthday = updateData.value.birthday; 
+    }
 
     if (Object.keys(profileDataToUpdate).length > 0) {
       await authStore.updateUserProfile(profileDataToUpdate);
       updateSuccess.value = true;
-      setTimeout(() => { showUpdateForm.value = false; updateSuccess.value = false; }, 2000);
-    } else { updateError.value = '未检测到信息更改'; }
-  } catch (err) { updateError.value = err.response?.data?.error || err.message || '更新失败，请稍后重试。'; }
-  finally { updateLoading.value = false; }
+      setTimeout(() => { 
+        showUpdateForm.value = false; 
+        updateSuccess.value = false; 
+      }, 2000);
+    } else { 
+      updateError.value = '未检测到信息更改'; 
+    }
+  } catch (err) { 
+    updateError.value = err.response?.data?.error || err.message || '更新失败，请稍后重试。'; 
+  } finally { 
+    updateLoading.value = false; 
+  }
 };
 
 // --- 修改密码逻辑 ---
@@ -403,6 +907,17 @@ const formatDateTime = (isoString) => {
     }
 };
 
+// 辅助函数：格式化日期
+const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+    } catch (e) {
+        return 'Invalid Date';
+    }
+};
+
 </script>
 
 <style scoped>
@@ -422,7 +937,7 @@ const formatDateTime = (isoString) => {
     gap: 2rem;
 }
 
-.user-info-card, .address-management-card {
+.user-info-card, .address-management-card, .member-points-card {
   background-color: var(--card-background);
   border: 1px solid var(--border-color);
   border-radius: 8px;
@@ -430,7 +945,7 @@ const formatDateTime = (isoString) => {
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-.user-info-card h3, .address-management-card h3 {
+.user-info-card h3, .address-management-card h3, .member-points-card h3 {
     margin-top: 0;
     margin-bottom: 1.5rem;
     border-bottom: 1px solid var(--border-color-light);
@@ -522,6 +1037,405 @@ const formatDateTime = (isoString) => {
 .success-message { color: var(--success-color); }
 .inline-error { font-size: 0.8rem; display: inline; margin-left: 5px;}
 
+/* 会员积分样式 */
+.member-points-card {
+    overflow: hidden;
+}
+
+.member-level-section {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+}
+
+.level-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #c62828;
+    border: 2px solid #fa964b;
+}
+
+.vip-badge {
+    background-color: #fcf2e6;
+    border-color: #f6ba67;
+    color: #e6a23c;
+}
+
+.level-name {
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.points-display {
+    flex: 1;
+}
+
+.current-points {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0.5rem;
+}
+
+.points-number {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.points-label {
+    font-size: 0.9rem;
+    color: var(--text-color-light);
+}
+
+.next-level-progress {
+    margin-top: 0.5rem;
+}
+
+.progress-text {
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+    color: var(--text-color-light);
+}
+
+.progress-bar-container {
+    height: 6px;
+    background-color: #e9e9e9;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: var(--primary-color);
+    border-radius: 3px;
+}
+
+.member-benefits-section {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background-color: #666;
+    border-radius: 8px;
+}
+
+.member-benefits-section h4 {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.benefit-item {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem;
+    background-color: #555;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.benefit-icon {
+    font-size: 1.5rem;
+    margin-right: 0.8rem;
+}
+
+.benefit-desc {
+    font-size: 0.9rem;
+}
+
+.points-coupons-tabs {
+    margin-top: 1.5rem;
+}
+
+.tabs-header {
+    display: flex;
+    border-bottom: 1px solid var(--border-color-light);
+    margin-bottom: 1rem;
+}
+
+.tab-item {
+    padding: 0.8rem 1.2rem;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-color-light);
+    position: relative;
+}
+
+.active-tab {
+    color: var(--primary-color);
+}
+
+.active-tab::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--primary-color);
+}
+
+.tab-content {
+    min-height: 200px;
+}
+
+.points-records-container, .coupons-container {
+    padding: 0.5rem 0;
+}
+
+.no-data-message {
+    text-align: center;
+    padding: 2rem 0;
+    color: var(--text-color-light);
+}
+
+.points-records-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.points-record-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.record-info {
+    flex: 1;
+}
+
+.record-description {
+    font-size: 0.95rem;
+    margin-bottom: 0.3rem;
+}
+
+.record-date {
+    font-size: 0.85rem;
+    color: var(--text-color-light);
+}
+
+.record-points {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.record-points.positive {
+    color: #4caf50;
+}
+
+.record-points.negative {
+    color: #f44336;
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1.5rem;
+    gap: 1rem;
+}
+
+.page-info {
+    font-size: 0.9rem;
+    color: var(--text-color-light);
+}
+
+.coupon-status-tabs {
+    display: flex;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.coupon-status-tabs span {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-color-light);
+}
+
+.coupon-status-tabs span.active {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    font-weight: 500;
+}
+
+.coupons-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.coupon-item {
+    position: relative;
+    display: flex;
+    background: linear-gradient(to right, var(--primary-color) 30%, #fff 30%);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.coupon-item.used-coupon {
+    opacity: 0.7;
+    filter: grayscale(30%);
+}
+
+.coupon-value {
+    width: 30%;
+    padding: 1.2rem 0;
+    color: #fff;
+    font-size: 1.3rem;
+    font-weight: bold;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.coupon-details {
+    width: 70%;
+    padding: 1rem;
+}
+
+.coupon-name {
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+}
+
+.coupon-rule {
+    font-size: 0.85rem;
+    color: var(--text-color-light);
+    margin-bottom: 0.3rem;
+}
+
+.coupon-validity {
+    font-size: 0.8rem;
+    color: var(--text-color-light);
+}
+
+.coupon-status {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.8rem;
+    background-color: #f5f5f5;
+    color: #999;
+    border-radius: 4px;
+}
+
+.coupon-actions {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+/* 兑换优惠券弹窗 */
+.exchange-coupon-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    width: 90%;
+    max-width: 500px;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.modal-header h4 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.available-points {
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+}
+
+.exchange-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.exchange-option {
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.exchange-option:hover:not(.unavailable) {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.option-value {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.option-points {
+    font-size: 0.9rem;
+    color: var(--text-color-light);
+}
+
+.exchange-option.unavailable {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.option-insufficient {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: #f44336;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.7rem;
+    border-radius: 0 6px 0 6px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color-light);
+    gap: 1rem;
+}
+
 .address-list {
 }
 .address-item {
@@ -538,9 +1452,15 @@ const formatDateTime = (isoString) => {
 
 @media (max-width: 768px) {
   .user-center-page { padding: 1rem; }
-  .user-info-card, .address-management-card { padding: 1rem 1.2rem; }
+  .user-info-card, .address-management-card, .member-points-card { padding: 1rem 1.2rem; }
   .form-row { flex-direction: column; gap: 1rem; }
   .address-list { grid-template-columns: 1fr; }
+  
+  .member-level-section { flex-direction: column; }
+  .level-badge { margin-bottom: 0.5rem; }
+  .benefits-grid { grid-template-columns: 1fr; }
+  .coupons-list { grid-template-columns: 1fr; }
+  .exchange-options { grid-template-columns: 1fr; }
 }
 
 input, textarea {

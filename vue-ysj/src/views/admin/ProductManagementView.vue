@@ -23,6 +23,9 @@
               <th>名称</th>
               <th>价格</th>
               <th>分类</th>
+              <th>总库存</th>
+              <th>可用库存</th>
+              <th>预警阈值</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -41,9 +44,19 @@
               <td>{{ product.name }}</td>
               <td>¥{{ product.price }}</td>
               <td>{{ product.category || '无分类' }}</td>
+              <td>{{ product.total_stock || 0 }}</td>
+              <td>
+                <span :class="{'stock-warning': product.available_stock <= product.warning_stock}">
+                  {{ product.available_stock || 0 }}
+                </span>
+              </td>
+              <td>{{ product.warning_stock || 10 }}</td>
               <td class="actions-cell">
                 <button @click="editProduct(product)" class="btn-edit">
                   <i class="fas fa-edit"></i> 编辑
+                </button>
+                <button @click="adjustStock(product)" class="btn-adjust-stock">
+                  <i class="fas fa-boxes"></i> 调整库存
                 </button>
                 <button @click="confirmDelete(product)" class="btn-delete">
                   <i class="fas fa-trash"></i> 删除
@@ -107,6 +120,29 @@
               type="text"
               placeholder="请输入分类"
             >
+          </div>
+          
+          <div class="form-group">
+            <label for="total_stock">初始总库存</label>
+            <input 
+              id="total_stock"
+              v-model.number="newProduct.total_stock"
+              type="number"
+              min="0"
+              placeholder="请输入初始库存数量"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="warning_stock">库存预警阈值</label>
+            <input 
+              id="warning_stock"
+              v-model.number="newProduct.warning_stock"
+              type="number"
+              min="0"
+              placeholder="库存低于此值时提醒"
+            >
+            <small class="form-hint">当可用库存低于此值时将显示预警</small>
           </div>
           
           <div class="form-group">
@@ -196,6 +232,45 @@
           </div>
           
           <div class="form-group">
+            <label for="edit-total-stock">总库存</label>
+            <input 
+              id="edit-total-stock"
+              v-model.number="editingProduct.total_stock"
+              type="number"
+              min="0"
+              placeholder="请输入总库存数量"
+            >
+          </div>
+          
+          <div class="form-group stock-info">
+            <div>
+              <label>可用库存</label>
+              <div class="stock-value" :class="{'stock-warning': editingProduct.available_stock <= editingProduct.warning_stock}">
+                {{ editingProduct.available_stock || 0 }}
+              </div>
+              <small class="form-hint">由系统自动计算，不可直接修改</small>
+            </div>
+            
+            <div>
+              <label>预扣库存</label>
+              <div class="stock-value">{{ editingProduct.prelock_stock || 0 }}</div>
+              <small class="form-hint">已下单未支付的库存量</small>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="edit-warning-stock">库存预警阈值</label>
+            <input 
+              id="edit-warning-stock"
+              v-model.number="editingProduct.warning_stock"
+              type="number"
+              min="0"
+              placeholder="库存低于此值时提醒"
+            >
+            <small class="form-hint">当可用库存低于此值时将显示预警</small>
+          </div>
+          
+          <div class="form-group">
             <label>当前图片</label>
             <div class="current-images" v-if="editingProduct.images && editingProduct.images.length">
               <div v-for="(img, index) in editingProduct.images" :key="index" class="current-image-item">
@@ -261,11 +336,86 @@
         </div>
       </div>
     </div>
+    
+    <!-- 新增: 库存调整对话框 -->
+    <div v-if="showStockAdjustForm" class="modal-overlay">
+      <div class="modal-container stock-adjust-modal">
+        <div class="modal-header">
+          <h3>调整库存 - {{ stockAdjustProduct.name }}</h3>
+          <button @click="showStockAdjustForm = false" class="close-btn">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <form @submit.prevent="submitStockAdjust" class="product-form">
+          <div class="form-group stock-info">
+            <div>
+              <label>当前总库存</label>
+              <div class="stock-value">{{ stockAdjustProduct.total_stock || 0 }}</div>
+            </div>
+            
+            <div>
+              <label>当前可用库存</label>
+              <div class="stock-value" :class="{'stock-warning': stockAdjustProduct.available_stock <= stockAdjustProduct.warning_stock}">
+                {{ stockAdjustProduct.available_stock || 0 }}
+              </div>
+            </div>
+            
+            <div>
+              <label>当前预扣库存</label>
+              <div class="stock-value">{{ stockAdjustProduct.prelock_stock || 0 }}</div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="adjust-total-stock">调整后总库存 <span class="required">*</span></label>
+            <input 
+              id="adjust-total-stock"
+              v-model.number="stockAdjustForm.newTotalStock"
+              type="number"
+              :min="stockAdjustProduct.prelock_stock || 0"
+              required
+              placeholder="请输入调整后的总库存"
+            >
+            <small class="form-hint">总库存不能小于当前预扣库存 ({{ stockAdjustProduct.prelock_stock || 0 }})</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="adjust-reason">调整原因 <span class="required">*</span></label>
+            <textarea
+              id="adjust-reason"
+              v-model="stockAdjustForm.reason"
+              rows="3"
+              required
+              placeholder="请输入库存调整原因，如：采购入库、库存盘点、质量问题等"
+            ></textarea>
+          </div>
+          
+          <div class="stock-change-preview" v-if="stockChangeAmount !== 0">
+            <div class="change-arrow" :class="{'increase': stockChangeAmount > 0, 'decrease': stockChangeAmount < 0}">
+              {{ stockChangeAmount > 0 ? '↑' : '↓' }}
+            </div>
+            <div class="change-text">
+              库存将{{ stockChangeAmount > 0 ? '增加' : '减少' }} <span class="change-amount">{{ Math.abs(stockChangeAmount) }}</span> 件
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" @click="showStockAdjustForm = false" class="btn-cancel">
+              取消
+            </button>
+            <button type="submit" class="btn-submit" :disabled="isSubmitting || !isStockAdjustValid">
+              <span v-if="isSubmitting">提交中...</span>
+              <span v-else>确认调整</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 
 // 状态变量
 const products = ref([]);
@@ -281,12 +431,43 @@ const uploadedFiles = ref([]);
 const editUploadedFiles = ref([]);
 const productToDelete = ref({});
 
+// 新增: 库存调整相关状态
+const showStockAdjustForm = ref(false);
+const stockAdjustProduct = reactive({
+  id: null,
+  name: '',
+  total_stock: 0,
+  available_stock: 0,
+  prelock_stock: 0,
+  warning_stock: 10
+});
+
+const stockAdjustForm = reactive({
+  newTotalStock: 0,
+  reason: ''
+});
+
+// 库存变化量计算
+const stockChangeAmount = computed(() => {
+  return stockAdjustForm.newTotalStock - stockAdjustProduct.total_stock;
+});
+
+// 库存调整表单验证
+const isStockAdjustValid = computed(() => {
+  return (
+    stockAdjustForm.newTotalStock >= (stockAdjustProduct.prelock_stock || 0) &&
+    stockAdjustForm.reason.trim().length > 0
+  );
+});
+
 // 新产品表单数据
 const newProduct = reactive({
   name: '',
   description: '',
   price: '',
   category: '',
+  total_stock: 0,       // 新增：初始库存
+  warning_stock: 10     // 新增：预警阈值，默认10
 });
 
 // 编辑产品表单数据
@@ -296,7 +477,11 @@ const editingProduct = reactive({
   description: '',
   price: '',
   category: '',
-  images: []
+  images: [],
+  total_stock: 0,       // 新增：总库存
+  available_stock: 0,   // 新增：可用库存 (展示用，不可直接修改)
+  prelock_stock: 0,     // 新增：预扣库存 (展示用，不可直接修改)
+  warning_stock: 10     // 新增：预警阈值
 });
 
 // 后端API地址
@@ -394,6 +579,9 @@ const addProduct = async () => {
     formData.append('description', newProduct.description);
     formData.append('price', newProduct.price);
     formData.append('category', newProduct.category);
+    // 添加库存相关字段
+    formData.append('total_stock', newProduct.total_stock || 0);
+    formData.append('warning_stock', newProduct.warning_stock || 10);
     
     // 添加上传的图片文件
     uploadedFiles.value.forEach(file => {
@@ -415,6 +603,8 @@ const addProduct = async () => {
     newProduct.description = '';
     newProduct.price = '';
     newProduct.category = '';
+    newProduct.total_stock = 0;
+    newProduct.warning_stock = 10;
     uploadedFiles.value = [];
     imagePreviewUrls.value = [];
     showAddProductForm.value = false;
@@ -441,6 +631,11 @@ const editProduct = (product) => {
   editingProduct.price = product.price;
   editingProduct.category = product.category || '';
   editingProduct.images = product.images || [];
+  // 复制库存相关数据
+  editingProduct.total_stock = product.total_stock || 0;
+  editingProduct.available_stock = product.available_stock || 0;
+  editingProduct.prelock_stock = product.prelock_stock || 0;
+  editingProduct.warning_stock = product.warning_stock || 10;
   
   // 清空编辑中上传的图片
   editUploadedFiles.value = [];
@@ -460,6 +655,9 @@ const updateProduct = async () => {
     formData.append('description', editingProduct.description);
     formData.append('price', editingProduct.price);
     formData.append('category', editingProduct.category);
+    // 添加库存相关字段
+    formData.append('total_stock', editingProduct.total_stock || 0);
+    formData.append('warning_stock', editingProduct.warning_stock || 10);
     
     // 添加新上传的图片文件
     editUploadedFiles.value.forEach(file => {
@@ -503,8 +701,8 @@ const deleteProduct = async () => {
   isSubmitting.value = true;
   
   try {
-    const response = await fetch(`/api/products/${productToDelete.value.id}/delete`, {
-      method: 'POST',
+    const response = await fetch(`/api/products/${productToDelete.value.id}`, {
+      method: 'DELETE',
     });
     
     if (!response.ok) {
@@ -523,6 +721,64 @@ const deleteProduct = async () => {
   } catch (err) {
     console.error('删除产品失败:', err);
     alert(`删除产品失败: ${err.message}`);
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+// 新增: 打开库存调整对话框
+const adjustStock = (product) => {
+  // 复制产品库存数据到调整表单
+  stockAdjustProduct.id = product.id;
+  stockAdjustProduct.name = product.name;
+  stockAdjustProduct.total_stock = product.total_stock || 0;
+  stockAdjustProduct.available_stock = product.available_stock || 0;
+  stockAdjustProduct.prelock_stock = product.prelock_stock || 0;
+  stockAdjustProduct.warning_stock = product.warning_stock || 10;
+  
+  // 设置初始调整值为当前总库存
+  stockAdjustForm.newTotalStock = product.total_stock || 0;
+  stockAdjustForm.reason = '';
+  
+  // 显示库存调整对话框
+  showStockAdjustForm.value = true;
+};
+
+// 新增: 提交库存调整
+const submitStockAdjust = async () => {
+  if (!isStockAdjustValid.value) {
+    return;
+  }
+  
+  isSubmitting.value = true;
+  
+  try {
+    const formData = new FormData();
+    formData.append('total_stock', stockAdjustForm.newTotalStock);
+    formData.append('adjustment_reason', stockAdjustForm.reason);
+    
+    // 提交到专用的库存调整API
+    const response = await fetch(`/api/products/${stockAdjustProduct.id}/adjust-stock`, {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error ${response.status}`);
+    }
+    
+    // 关闭库存调整对话框
+    showStockAdjustForm.value = false;
+    
+    // 重新获取产品列表
+    await fetchProducts();
+    
+    // 提示成功
+    alert('库存调整成功');
+  } catch (err) {
+    console.error('库存调整失败:', err);
+    alert(`库存调整失败: ${err.message}`);
   } finally {
     isSubmitting.value = false;
   }
@@ -644,6 +900,7 @@ onMounted(() => {
 
 .actions-cell {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
@@ -869,5 +1126,113 @@ onMounted(() => {
   .actions-cell {
     flex-direction: column;
   }
+}
+
+/* 库存预警样式 */
+.stock-warning {
+  color: #ff5252;
+  font-weight: bold;
+}
+
+/* 库存信息显示样式 */
+.stock-info {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.stock-info > div {
+  flex: 1;
+}
+
+.stock-value {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background-color: var(--input-background, #2a2a2a);
+  border-radius: 4px;
+  display: inline-block;
+  min-width: 4rem;
+  text-align: center;
+}
+
+.form-hint {
+  display: block;
+  color: var(--text-color-medium, #a0a0a0);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+/* 适配小屏幕 */
+@media (max-width: 992px) {
+  .product-table th:nth-child(6),
+  .product-table td:nth-child(6), 
+  .product-table th:nth-child(8),
+  .product-table td:nth-child(8) {
+    display: none; /* 在小屏幕上隐藏总库存和预警阈值列 */
+  }
+}
+
+@media (max-width: 768px) {
+  .product-table th:nth-child(7),
+  .product-table td:nth-child(7) {
+    display: none; /* 在更小屏幕上隐藏可用库存列 */
+  }
+  
+  .stock-info {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+/* 库存调整对话框样式 */
+.stock-adjust-modal {
+  max-width: 500px;
+}
+
+.stock-change-preview {
+  background-color: var(--background-color-light, #252525);
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.change-arrow {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.change-arrow.increase {
+  color: #4caf50;
+}
+
+.change-arrow.decrease {
+  color: #f44336;
+}
+
+.change-amount {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+/* 调整库存按钮样式 */
+.btn-adjust-stock {
+  border: none;
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background-color: #2196f3;
+  color: white;
+}
+
+.btn-adjust-stock:hover {
+  background-color: #1976d2;
 }
 </style> 

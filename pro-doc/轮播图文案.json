@@ -1,0 +1,154 @@
+{
+    "carouselItems": [
+      {
+        "imageUrl": "/img/carousel-1.png",
+        "altText": "天山雪线下的蜂场",
+        "title": "天山蜜源地 | 自然纯净",
+        "description": "海拔2000-3688米垂直蜜源带，与冰川为邻，200公里生态隔离区孕育450种蜜源植物"
+      },
+      {
+        "imageUrl": "/img/carousel-2.png",
+        "altText": "黑蜂振翅微距",
+        "title": "珍稀新疆黑蜂 | 活力充沛",
+        "description": "中国四大名蜂之一，翼展达12.8mm，零下30℃仍可出巢，单蜂日采蜜量比普通蜂种高37%"
+      },
+      {
+        "imageUrl": "/img/carousel-3.png",
+        "altText": "手工割蜜过程",
+        "title": "古法慢酿 | 匠心传承",
+        "description": "沿用木制摇蜜机，离心力控制在200转/分钟，确保巢脾完整可重复使用"
+      },
+      {
+        "imageUrl": "/img/carousel-4.png",
+        "altText": "实验室检测场景",
+        "title": "欧盟检测标准 | 安心之选",
+        "description": "通过BRC/IFS双认证，216项检测指标超欧盟标准，每瓶蜜可扫码查看重金属检测报告"
+      },
+      {
+        "imageUrl": "/img/carousel-5.png",
+        "altText": "结晶蜜显微结构",
+        "title": "原蜜零添加 | 自然本真味",
+        "description": "葡萄糖晶体自然析出，每平方厘米超800个结晶核，证明未经过高温破晶处理"
+      },
+      {
+        "imageUrl": "/img/carousel-6.png",
+        "altText": "高原蜂箱阵列",
+        "title": "高原日光浴 | 天然熟成蜜",
+        "description": "日均紫外线强度6.2级，促进花蜜酶解转化，波美度达43.5°±0.5的黄金浓度"
+      },
+      {
+        "imageUrl": "/img/carousel-7.png",
+        "altText": "荒漠中的蜂场",
+        "title": "百里无人区 | 零污染蜜源",
+        "description": "半径150公里无工业区，蜜源植物天然抗病虫，无需农药的纯净生态系统"
+      },
+      {
+        "imageUrl": "/img/carousel-8.png",
+        "altText": "检测报告特写",
+        "title": "SGS双认证 | 营养可视化",
+        "description": "每100g含17.2mg维生素群，葡萄糖果糖比例1:0.92，符合WHO黄金配比标准"
+      },
+      {
+        "imageUrl": "/img/carousel-9.png",
+        "altText": "活性酶检测仪",
+        "title": "活性酶保留 | 营养新标杆",
+        "description": "淀粉酶值达35.6DN，超过国标8倍，每勺蜜含超2000个活性酶分子"
+      },
+      {
+        "imageUrl": "/img/carousel-10.png",
+        "altText": "低温过滤车间",
+        "title": "非高温萃取 | 活性全留存",
+        "description": "全程控温38℃以下，采用200目食品级尼龙滤网，保留0.02mm以上花粉颗粒"
+      },
+      {
+        "imageUrl": "/img/carousel-11.png",
+        "altText": "蜜液透光展示",
+        "title": "晶润琥珀色 | 自然光感蜜",
+        "description": "透光率91.7%的天然琥珀色，拉丝长度达23cm不断，浓稠度肉眼可见"
+      },
+      {
+        "imageUrl": "/img/carousel-12.png",
+        "altText": "蜜勺拉丝特写",
+        "title": "丝绒般质地 | 舌尖会呼吸",
+        "description": "含水量17.8%的黄金平衡点，入口5秒即化，留下百种芳香物质"
+      },
+      {
+        "imageUrl": "/img/carousel-13.png",
+        "altText": "四季结晶对比",
+        "title": "四季可结晶 | 纯蜜身份证",
+        "description": "春夏呈乳酪状，秋冬现鱼籽纹，温度适应性证明无添加的天然特性"
+      },
+      {
+        "imageUrl": "/img/carousel-14.png",
+        "altText": "游牧转场场景",
+        "title": "游牧采蜜法 | 与自然共舞",
+        "description": "每年4次转场追花，蜂箱迁移不超过3公里，确保蜜蜂体力充沛"
+      },
+      {
+        "imageUrl": "/img/carousel-15.png",
+        "altText": "古法蜂箱群",
+        "title": "百年蜂箱群 | 生态活文物",
+        "description": "采用百年椴木蜂箱，箱内留存天然蜂胶镀层，形成独特微生物环境"
+      },
+      {
+        "imageUrl": "/img/carousel-16.png",
+        "altText": "古代蜜罐文物",
+        "title": "丝路蜜语者 | 千年甘甜史",
+        "description": "复原唐代石蜜制法，参照敦煌壁画记载，重现丝路商队贡蜜标准"
+      },
+      {
+        "imageUrl": "/img/carousel-17.png",
+        "altText": "抗氧化实验对比",
+        "title": "天然抗氧化 | 蜜养方程式",
+        "description": "ORAC抗氧化值达550μmol TE/g，相当于蓝莓的3倍，每日10g满足全日需求"
+      },
+      {
+        "imageUrl": "/img/carousel-18.png",
+        "altText": "晨间取蜜仪式",
+        "title": "每日蜜一勺 | 元气补给站",
+        "description": "含16种氨基酸和7种矿物质，β-葡聚糖含量达2.3mg/100g"
+      },
+      {
+        "imageUrl": "/img/carousel-19.png",
+        "altText": "蜂巢显微摄影",
+        "title": "微距看蜂巢 | 自然显微镜",
+        "description": "六边形孔洞公差±0.02mm，每平方厘米承重8.7kg，展现完美几何力量"
+      },
+      {
+        "imageUrl": "/img/carousel-20.png",
+        "altText": "蜂农检查蜂群",
+        "title": "蜂群保育者 | 生态守护人",
+        "description": "每群蜂保留6kg越冬蜜，采用数字化蜂箱温控，越冬存活率达97%"
+      },
+      {
+        "imageUrl": "/img/carousel-21.png",
+        "altText": "溯源二维码演示",
+        "title": "可溯身份证 | 全程看得见",
+        "description": "13位溯源码可查采蜜日期、蜂场坐标、检测报告甚至负责蜂农信息"
+      },
+      {
+        "imageUrl": "/img/carousel-22.png",
+        "altText": "蜂蜡工艺品制作",
+        "title": "蜂蜡再造计划 | 零废弃循环",
+        "description": "1kg蜂蜜仅产80g蜂蜡，我们将其制成环保蜡烛，燃烧时长可达58小时"
+      },
+      {
+        "imageUrl": "/img/carousel-23.png",
+        "altText": "日光色标对比卡",
+        "title": "日光色标瓶 | 天然显色计",
+        "description": "7级蜜色分级系统，从水白色到深琥珀色，对应不同蜜源植物花期"
+      },
+      {
+        "imageUrl": "/img/carousel-24.png",
+        "altText": "蜜珠坠落瞬间",
+        "title": "滴蜜成珠术 | 浓稠可视化",
+        "description": "滴落速度1滴/12秒，蜜珠直径达6.5mm不散，证明含水量低于18%"
+      },
+      {
+        "imageUrl": "/img/carousel-25.png",
+        "altText": "香型分解示意图",
+        "title": "蜜香分阶体验 | 前调中调尾调",
+        "description": "首调野蔷薇清新，中调沙棘果酸香，尾韵党参花甘冽，留存率超72小时"
+      }
+    ]
+  }

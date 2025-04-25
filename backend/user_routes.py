@@ -1,6 +1,6 @@
 # backend/user_routes.py
 from flask import Blueprint, jsonify, request, abort
-from models import db, User, Address
+from models import db, User, Address, UserCustomField, UserFieldDefinition, MemberLevel, PointsRecord, UserCoupon, Coupon
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash # 用于更新密码
 from functools import wraps
@@ -41,16 +41,42 @@ def admin_required(fn):
     return wrapper
 
 # --- 序列化函数 (简化示例) ---
-def serialize_user(user: User, include_email=False):
-    """将 User 对象序列化为字典 (简化)"""
+def serialize_user(user: User, include_email=False, include_details=False, include_custom_fields=False):
+    """将 User 对象序列化为字典 (增强版)"""
     data = {
         'id': user.id,
         'username': user.username,
+        'phone': user.phone,
         'created_at': user.created_at.isoformat(),
-        'is_admin': user.is_admin  # 添加管理员状态字段
+        'is_admin': user.is_admin
     }
-    if include_email:
+    
+    if include_email and user.email:
         data['email'] = user.email
+    
+    if include_details:
+        # 添加基本信息字段
+        data['gender'] = user.gender
+        data['real_name'] = user.real_name
+        data['birthday'] = user.birthday.isoformat() if user.birthday else None
+        
+        # 添加会员信息
+        data['points'] = user.points
+        data['total_spend'] = user.total_spend
+        data['last_login'] = user.last_login.isoformat() if user.last_login else None
+        
+        # 包含会员等级
+        if user.member_level:
+            data['member_level'] = {
+                'id': user.member_level.id,
+                'name': user.member_level.name,
+                'discount_rate': user.member_level.discount_rate
+            }
+    
+    # 包含自定义字段
+    if include_custom_fields:
+        data['custom_fields'] = user.get_custom_fields()
+        
     return data
 
 def serialize_address(address: Address):
@@ -69,51 +95,123 @@ def serialize_address(address: Address):
         'updated_at': address.updated_at.isoformat()
     }
 
+def serialize_user_field_definition(field_def: UserFieldDefinition):
+    """将用户字段定义序列化"""
+    data = {
+        'id': field_def.id,
+        'field_key': field_def.field_key,
+        'field_name': field_def.field_name,
+        'field_type': field_def.field_type,
+        'is_required': field_def.is_required,
+        'is_visible': field_def.is_visible,
+        'display_order': field_def.display_order
+    }
+    
+    # 添加选项（如果有）
+    if field_def.options:
+        data['options'] = field_def.get_options()
+    
+    return data
+
+def serialize_points_record(record: PointsRecord):
+    """将积分记录序列化"""
+    return {
+        'id': record.id,
+        'user_id': record.user_id,
+        'points': record.points,
+        'balance': record.balance,
+        'description': record.description,
+        'source_type': record.source_type,
+        'source_id': record.source_id,
+        'created_at': record.created_at.isoformat()
+    }
+
+def serialize_coupon(coupon: Coupon, include_usage=False):
+    """将优惠券序列化"""
+    data = {
+        'id': coupon.id,
+        'code': coupon.code,
+        'name': coupon.name,
+        'type': coupon.type,
+        'discount_value': coupon.discount_value,
+        'min_purchase': coupon.min_purchase,
+        'start_date': coupon.start_date.isoformat(),
+        'end_date': coupon.end_date.isoformat(),
+        'is_active': coupon.is_active,
+        'is_valid': coupon.is_valid()
+    }
+    
+    if include_usage:
+        data['max_uses'] = coupon.max_uses
+        data['current_uses'] = coupon.current_uses
+    
+    return data
+
+def serialize_user_coupon(user_coupon: UserCoupon):
+    """将用户优惠券序列化"""
+    data = {
+        'id': user_coupon.id,
+        'user_id': user_coupon.user_id,
+        'coupon_id': user_coupon.coupon_id,
+        'is_used': user_coupon.is_used,
+        'acquired_at': user_coupon.acquired_at.isoformat()
+    }
+    
+    if user_coupon.is_used and user_coupon.used_at:
+        data['used_at'] = user_coupon.used_at.isoformat()
+        data['order_id'] = user_coupon.order_id
+    
+    # 包含优惠券详情
+    data['coupon'] = serialize_coupon(user_coupon.coupon)
+    
+    return data
+
 # --- API 路由 ---
 
 @user_bp.route('/me', methods=['GET'])
 @jwt_required() # 需要有效 JWT 才能访问
 def get_current_user():
     """获取当前登录用户的信息"""
-    # --- DEBUG PRINT ---
-    # import sys
-    # print(f"[DEBUG /api/me] Request Headers:\n{request.headers}", file=sys.stderr)
-    # --- END DEBUG ---
     try:
         current_user_id = get_jwt_identity()
-        # --- DEBUG PRINT ---
-        # print(f"[DEBUG /api/me] JWT Identity (user_id): {current_user_id}", file=sys.stderr)
-        # --- END DEBUG ---
     except Exception as e:
-         # --- DEBUG PRINT ---
-        # print(f"[DEBUG /api/me] Error getting JWT identity: {e}", file=sys.stderr)
-        # --- END DEBUG ---
         return jsonify({"error": "无法解析用户信息"}), 422
 
     user = User.query.get(current_user_id)
-    # --- DEBUG PRINT ---
-    # if user:
-        # print(f"[DEBUG /api/me] User found in DB: {user.username}", file=sys.stderr)
-    # else:
-        # print(f"[DEBUG /api/me] User with ID {current_user_id} not found in DB!", file=sys.stderr)
-    # --- END DEBUG ---
     if not user:
          # 这种情况理论上不应发生，因为 JWT 验证通过了
         return jsonify({"error": "用户未找到"}), 404
-    # 返回当前用户信息，包含邮箱
-    result = serialize_user(user, include_email=True)
+    
+    # 检查是否需要包含详细信息
+    include_details = request.args.get('include_details') == 'true'
+    include_custom_fields = request.args.get('include_custom_fields') == 'true'
+    
+    # 返回当前用户信息
+    result = serialize_user(user, include_email=True, 
+                           include_details=include_details,
+                           include_custom_fields=include_custom_fields)
     
     # 获取用户地址（可选）
-    if request.args.get('include_addresses'):
+    if request.args.get('include_addresses') == 'true':
         addresses = user.addresses.order_by(Address.is_default.desc(), Address.created_at.desc()).all()
         result['addresses'] = [serialize_address(addr) for addr in addresses]
+    
+    # 获取积分记录（可选）
+    if request.args.get('include_points_records') == 'true':
+        points_records = user.points_records.order_by(PointsRecord.created_at.desc()).limit(10).all()
+        result['points_records'] = [serialize_points_record(record) for record in points_records]
+    
+    # 获取优惠券（可选）
+    if request.args.get('include_coupons') == 'true':
+        coupons = user.coupons.filter(UserCoupon.is_used == False).all()
+        result['coupons'] = [serialize_user_coupon(coupon) for coupon in coupons]
     
     return jsonify(result)
 
 @user_bp.route('/me', methods=['PUT'])
 @jwt_required()
 def update_current_user():
-    """更新当前登录用户的信息（例如邮箱、密码）"""
+    """更新当前登录用户的信息"""
     current_user_id = get_jwt_identity()
     user = User.query.get(current_user_id)
     if not user:
@@ -124,26 +222,62 @@ def update_current_user():
         return jsonify({"error": "请求体不能为空"}), 400
 
     updated = False
-    # 更新邮箱 (简单示例，实际应考虑邮箱验证流程)
-    if 'email' in data:
-        new_email = data['email']
-        # TODO: 添加邮箱格式验证
-        # 检查新邮箱是否已被其他用户使用
-        existing_user = User.query.filter(User.email == new_email, User.id != current_user_id).first()
-        if existing_user:
-            return jsonify({"error": "邮箱已被使用"}), 409
-        user.email = new_email
-        updated = True
-
+    
+    # 标准字段更新
+    standard_fields = ['email', 'username', 'gender', 'real_name', 'birthday', 'phone']
+    
+    for field in standard_fields:
+        if field in data:
+            # 特殊字段处理
+            if field == 'email' and data['email']:
+                # 检查邮箱是否已被占用
+                existing_user = User.query.filter(User.email == data['email'], 
+                                                 User.id != current_user_id).first()
+                if existing_user:
+                    return jsonify({"error": "邮箱已被使用"}), 409
+            
+            if field == 'username' and data['username']:
+                # 检查用户名是否已被占用
+                existing_user = User.query.filter(User.username == data['username'], 
+                                                 User.id != current_user_id).first()
+                if existing_user:
+                    return jsonify({"error": "用户名已被使用"}), 409
+            
+            if field == 'phone' and data['phone']:
+                # 检查手机号是否已被占用
+                existing_user = User.query.filter(User.phone == data['phone'], 
+                                                 User.id != current_user_id).first()
+                if existing_user:
+                    return jsonify({"error": "手机号已被使用"}), 409
+            
+            # 特殊处理生日字段
+            if field == 'birthday' and data['birthday']:
+                try:
+                    user.birthday = datetime.fromisoformat(data['birthday'])
+                except ValueError:
+                    return jsonify({"error": "生日格式无效，请使用YYYY-MM-DD格式"}), 400
+            else:
+                # 更新其他标准字段
+                setattr(user, field, data[field])
+            
+            updated = True
+    
     # 更新密码
     if 'password' in data:
         new_password = data['password']
         # TODO: 添加密码强度校验
         user.set_password(new_password)
         updated = True
-
-    # 可以添加更新其他字段的逻辑，如 username (需检查唯一性)
-
+    
+    # 处理自定义字段
+    if 'custom_fields' in data and isinstance(data['custom_fields'], dict):
+        for key, value in data['custom_fields'].items():
+            # 检查是否为有效的自定义字段
+            field_def = UserFieldDefinition.query.filter_by(field_key=key).first()
+            if field_def:
+                user.set_custom_field(key, value)
+                updated = True
+    
     if updated:
         try:
             db.session.commit()
@@ -151,7 +285,7 @@ def update_current_user():
         except Exception as e:
             db.session.rollback()
             # log error e
-            return jsonify({"error": "更新失败，请稍后重试"}), 500
+            return jsonify({"error": f"更新失败: {str(e)}"}), 500
     else:
         return jsonify({"message": "没有提供需要更新的信息"}), 200
 
@@ -198,6 +332,210 @@ def change_password():
         # log error e
         return jsonify({"error": "密码更新失败，请稍后重试"}), 500
 # --- 修改密码路由结束 ---
+
+# 新增：获取用户积分记录
+@user_bp.route('/me/points', methods=['GET'])
+@jwt_required()
+def get_my_points():
+    """获取当前用户的积分记录"""
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+    if not user:
+        return jsonify({"error": "用户未找到"}), 404
+    
+    # 分页参数
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 10))
+    
+    # 获取积分记录
+    points_query = user.points_records.order_by(PointsRecord.created_at.desc())
+    points_paginated = points_query.paginate(page=page, per_page=per_page)
+    
+    # 序列化结果
+    result = {
+        'points_balance': user.points,
+        'points_records': [serialize_points_record(record) for record in points_paginated.items],
+        'pagination': {
+            'total': points_paginated.total,
+            'pages': points_paginated.pages,
+            'page': page,
+            'per_page': per_page,
+            'has_next': points_paginated.has_next,
+            'has_prev': points_paginated.has_prev
+        }
+    }
+    
+    return jsonify(result)
+
+# 新增：获取用户优惠券
+@user_bp.route('/me/coupons', methods=['GET'])
+@jwt_required()
+def get_my_coupons():
+    """获取当前用户的优惠券"""
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+    if not user:
+        return jsonify({"error": "用户未找到"}), 404
+    
+    # 查询参数
+    status = request.args.get('status', 'valid')  # valid, used, all
+    
+    # 根据状态筛选
+    coupons_query = user.coupons
+    if status == 'valid':
+        coupons_query = coupons_query.filter(UserCoupon.is_used == False)
+    elif status == 'used':
+        coupons_query = coupons_query.filter(UserCoupon.is_used == True)
+    
+    # 获取优惠券
+    coupons = coupons_query.all()
+    
+    # 序列化结果
+    result = {
+        'coupons': [serialize_user_coupon(coupon) for coupon in coupons]
+    }
+    
+    return jsonify(result)
+
+# 新增：获取会员等级
+@user_bp.route('/member-levels', methods=['GET'])
+def get_member_levels():
+    """获取所有会员等级"""
+    levels = MemberLevel.query.order_by(MemberLevel.min_points).all()
+    
+    result = []
+    for level in levels:
+        level_data = {
+            'id': level.id,
+            'name': level.name,
+            'description': level.description,
+            'min_points': level.min_points,
+            'min_spend': level.min_spend,
+            'discount_rate': level.discount_rate,
+            'icon_url': level.icon_url,
+            'benefits': level.get_benefits()
+        }
+        result.append(level_data)
+    
+    return jsonify({'member_levels': result})
+
+# 新增：获取用户字段定义
+@user_bp.route('/user-fields', methods=['GET'])
+def get_user_field_definitions():
+    """获取所有用户字段定义"""
+    fields = UserFieldDefinition.query.filter_by(is_visible=True).order_by(UserFieldDefinition.display_order).all()
+    
+    result = [serialize_user_field_definition(field) for field in fields]
+    
+    return jsonify({'user_fields': result})
+
+# 新增：管理端 - 添加/编辑用户字段定义
+@user_bp.route('/admin/user-fields', methods=['POST'])
+@admin_required
+def add_user_field_definition():
+    """添加新的用户字段定义（管理员专用）"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "请求体不能为空"}), 400
+    
+    # 必填字段验证
+    required_fields = ['field_key', 'field_name', 'field_type']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"缺少必填字段: {field}"}), 400
+    
+    # 检查字段键是否已存在
+    existing_field = UserFieldDefinition.query.filter_by(field_key=data['field_key']).first()
+    if existing_field:
+        return jsonify({"error": "字段键已存在"}), 409
+    
+    # 创建新字段
+    field_def = UserFieldDefinition(
+        field_key=data['field_key'],
+        field_name=data['field_name'],
+        field_type=data['field_type'],
+        is_required=data.get('is_required', False),
+        is_visible=data.get('is_visible', True),
+        display_order=data.get('display_order', 0)
+    )
+    
+    # 设置选项（如果有）
+    if 'options' in data and isinstance(data['options'], list):
+        field_def.set_options(data['options'])
+    
+    try:
+        db.session.add(field_def)
+        db.session.commit()
+        return jsonify({
+            "message": "字段定义添加成功",
+            "field": serialize_user_field_definition(field_def)
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"添加字段定义失败: {str(e)}"}), 500
+
+@user_bp.route('/admin/user-fields/<int:field_id>', methods=['PUT'])
+@admin_required
+def update_user_field_definition(field_id):
+    """更新用户字段定义（管理员专用）"""
+    field_def = UserFieldDefinition.query.get(field_id)
+    if not field_def:
+        return jsonify({"error": "字段定义不存在"}), 404
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "请求体不能为空"}), 400
+    
+    # 更新字段属性（不允许修改field_key）
+    if 'field_name' in data:
+        field_def.field_name = data['field_name']
+    
+    if 'field_type' in data:
+        field_def.field_type = data['field_type']
+    
+    if 'is_required' in data:
+        field_def.is_required = data['is_required']
+    
+    if 'is_visible' in data:
+        field_def.is_visible = data['is_visible']
+    
+    if 'display_order' in data:
+        field_def.display_order = data['display_order']
+    
+    # 更新选项（如果有）
+    if 'options' in data and isinstance(data['options'], list):
+        field_def.set_options(data['options'])
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            "message": "字段定义更新成功",
+            "field": serialize_user_field_definition(field_def)
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"更新字段定义失败: {str(e)}"}), 500
+
+@user_bp.route('/admin/user-fields/<int:field_id>', methods=['DELETE'])
+@admin_required
+def delete_user_field_definition(field_id):
+    """删除用户字段定义（管理员专用）"""
+    field_def = UserFieldDefinition.query.get(field_id)
+    if not field_def:
+        return jsonify({"error": "字段定义不存在"}), 404
+    
+    try:
+        # 删除相关的用户自定义字段数据
+        UserCustomField.query.filter_by(field_key=field_def.field_key).delete()
+        
+        # 删除字段定义
+        db.session.delete(field_def)
+        db.session.commit()
+        
+        return jsonify({"message": "字段定义删除成功"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"删除字段定义失败: {str(e)}"}), 500
 
 @user_bp.route('/users', methods=['GET'])
 @admin_required # 使用我们定义的管理员权限检查装饰器

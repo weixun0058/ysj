@@ -95,6 +95,7 @@
               </th>
               <th>ID</th>
               <th>用户名</th>
+              <th>手机号码</th>
               <th>邮箱</th>
               <th>注册时间</th>
               <th>管理员</th>
@@ -118,7 +119,8 @@
               </td>
               <td>{{ user.id }}</td>
               <td>{{ user.username }}</td>
-              <td>{{ user.email }}</td>
+              <td>{{ user.phone || '-' }}</td>
+              <td>{{ user.email || '-' }}</td>
               <td>{{ formatDate(user.created_at) }}</td>
               <td>
                 <span v-if="user.is_admin" class="admin-badge">是</span>
@@ -195,7 +197,11 @@
           <div class="modal-body">
             <p><strong>ID:</strong> {{ selectedUser.id }}</p>
             <p><strong>用户名:</strong> {{ selectedUser.username }}</p>
-            <p><strong>邮箱:</strong> {{ selectedUser.email }}</p>
+            <p><strong>手机号码:</strong> {{ selectedUser.phone || '未设置' }}</p>
+            <p><strong>邮箱:</strong> {{ selectedUser.email || '未设置' }}</p>
+            <p><strong>真实姓名:</strong> {{ selectedUser.real_name || '未设置' }}</p>
+            <p><strong>性别:</strong> {{ selectedUser.gender || '未设置' }}</p>
+            <p><strong>生日:</strong> {{ selectedUser.birthday ? formatDate(selectedUser.birthday) : '未设置' }}</p>
             <p><strong>注册时间:</strong> {{ formatDate(selectedUser.created_at) }}</p>
             <p><strong>管理员权限:</strong> {{ selectedUser.is_admin ? '是' : '否' }}</p>
           </div>
