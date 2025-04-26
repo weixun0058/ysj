@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia' // 引入 Pinia
 import './style.css' // 导入全局样式一次
+import 'leaflet/dist/leaflet.css'; // 导入 Leaflet CSS
 import App from './App.vue'
 import router from './router' // 导入路由配置
 import { useAuthStore } from './stores/auth'; // 导入 auth store

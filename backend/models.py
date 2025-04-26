@@ -504,6 +504,32 @@ class BrandCollaboration(db.Model):
     # 关联的项目
     projects = db.relationship('CollaborationProject', backref='collaboration', lazy='dynamic', cascade='all, delete-orphan')
     
+    def to_dict(self):
+        """将对象转换为字典，便于JSON序列化"""
+        try:
+            product_types_list = json.loads(self.product_types) if self.product_types else []
+        except:
+            product_types_list = []
+            
+        return {
+            'id': self.id,
+            'company_name': self.company_name,
+            'industry': self.industry,
+            'contact_name': self.contact_name,
+            'position': self.position,
+            'email': self.email,
+            'phone': self.phone,
+            'product_types': product_types_list,
+            'cooperation_type': self.cooperation_type,
+            'expected_volume': self.expected_volume,
+            'expected_start_date': self.expected_start_date,
+            'details': self.details,
+            'status': self.status,
+            'is_priority': self.is_priority,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None,
+            'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S') if self.updated_at else None
+        }
+
     def __repr__(self):
         return f'<BrandCollaboration {self.company_name}>'
 

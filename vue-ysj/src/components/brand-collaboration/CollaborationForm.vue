@@ -1,6 +1,21 @@
 <template>
-  <div class="collaboration-form">
-    <form @submit.prevent="handleSubmit" ref="form">
+  <div class="collaboration-form-container">
+    <!-- 成功提交后显示成功消息 -->
+    <CollaborationSuccessMessage
+      v-if="showSuccessMessage"
+      @back-to-home="handleBackToHome"
+      @view-products="handleViewProducts"
+    />
+    
+    <!-- 提交成功信息 -->
+    <div v-if="showSuccessMessage" class="form-success-message">
+      <div class="success-icon">✓</div>
+      <h3>您的合作意向已成功提交</h3>
+      <p>感谢您对壹世健品牌联名合作的兴趣。我们的业务团队将在1-3个工作日内与您联系。</p>
+    </div>
+    
+    <!-- 表单内容 -->
+    <form v-else @submit.prevent="handleSubmit" class="collaboration-form">
       <!-- 基本信息 -->
       <div class="form-section">
         <h3>基本信息</h3>
@@ -28,11 +43,7 @@
               :class="{ error: errors.industry }"
             >
               <option value="">请选择行业</option>
-              <option value="food">健康食品/饮品</option>
-              <option value="beauty">美容个护</option>
-              <option value="gift">高端礼品</option>
-              <option value="travel">文旅农创</option>
-              <option value="other">其他</option>
+              <option v-for="option in industryOptions" :value="option.value">{{ option.label }}</option>
             </select>
             <span v-if="errors.industry" class="error-message">{{ errors.industry }}</span>
           </div>
@@ -124,22 +135,16 @@
             :class="{ error: errors.cooperationType }"
           >
             <option value="">请选择合作方式</option>
-            <option value="product">产品联名定制</option>
-            <option value="channel">渠道资源互换</option>
-            <option value="marketing">联合营销活动</option>
-            <option value="comprehensive">综合合作方案</option>
+            <option v-for="option in cooperationTypeOptions" :value="option.value">{{ option.label }}</option>
           </select>
           <span v-if="errors.cooperationType" class="error-message">{{ errors.cooperationType }}</span>
         </div>
         
         <div class="form-group">
           <label for="expected-quantity">预计年度合作量</label>
-          <select id="expected-quantity" v-model="formData.expectedQuantity">
+          <select id="expected-quantity" v-model="formData.annualVolume">
             <option value="">请选择预计年度合作量</option>
-            <option value="small">小批量 (1-1000件)</option>
-            <option value="medium">中等批量 (1001-5000件)</option>
-            <option value="large">大批量 (5001-10000件)</option>
-            <option value="huge">超大批量 (10000件以上)</option>
+            <option v-for="option in volumeOptions" :value="option.value">{{ option.label }}</option>
           </select>
         </div>
         
@@ -147,11 +152,7 @@
           <label for="expected-start-date">预计启动时间</label>
           <select id="expected-start-date" v-model="formData.expectedStartDate">
             <option value="">请选择预计启动时间</option>
-            <option value="immediate">立即启动</option>
-            <option value="1-month">1个月内</option>
-            <option value="3-month">3个月内</option>
-            <option value="6-month">半年内</option>
-            <option value="uncertain">尚未确定</option>
+            <option v-for="option in timeframeOptions" :value="option.value">{{ option.label }}</option>
           </select>
         </div>
         
@@ -173,13 +174,13 @@
         <label class="checkbox-label">
           <input 
             type="checkbox" 
-            v-model="formData.consent" 
+            v-model="formData.agreePrivacy" 
             required
-            :class="{ error: errors.consent }"
+            :class="{ error: errors.agreePrivacy }"
           > 
-          我同意贵公司根据<a href="#" @click.prevent="showPrivacyPolicy = true">隐私政策</a>处理我的个人信息
+          我同意贵公司根据<a href="#" @click.prevent="togglePrivacyPolicy">隐私政策</a>处理我的个人信息
         </label>
-        <span v-if="errors.consent" class="error-message">{{ errors.consent }}</span>
+        <span v-if="errors.agreePrivacy" class="error-message">{{ errors.agreePrivacy }}</span>
       </div>
       
       <div class="form-actions">
@@ -190,6 +191,7 @@
         >
           {{ isSubmitting ? '提交中...' : '提交合作意向' }}
         </button>
+        <p v-if="apiError" class="error-message global-error">{{ apiError }}</p>
       </div>
     </form>
     
@@ -198,7 +200,7 @@
       <div class="modal-content privacy-policy">
         <div class="modal-header">
           <h3>隐私政策</h3>
-          <button class="close-btn" @click="showPrivacyPolicy = false">&times;</button>
+          <button class="close-btn" @click="togglePrivacyPolicy">&times;</button>
         </div>
         <div class="modal-body">
           <p>本隐私政策介绍了我们收集、使用和披露您的个人信息的方式。</p>
@@ -231,7 +233,7 @@
           <p>如果您对我们的隐私政策有任何疑问，请联系：privacy@ysj.com</p>
         </div>
         <div class="modal-footer">
-          <button @click="showPrivacyPolicy = false" class="primary-btn">我已阅读并理解</button>
+          <button @click="togglePrivacyPolicy" class="primary-btn">我已阅读并理解</button>
         </div>
       </div>
     </div>
@@ -239,12 +241,12 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
-import axios from 'axios';
+import { reactive, ref } from 'vue';
+import { submitCollaborationRequest, getIndustryTypes, getCollaborationTypes } from '@/api/collaborationApi';
+import CollaborationSuccessMessage from './CollaborationSuccessMessage.vue';
 
 const emit = defineEmits(['form-submitted']);
 
-// 表单数据
 const formData = reactive({
   companyName: '',
   industry: '',
@@ -254,122 +256,205 @@ const formData = reactive({
   phone: '',
   productTypes: [],
   cooperationType: '',
-  expectedQuantity: '',
+  annualVolume: '',
   expectedStartDate: '',
   cooperationDetails: '',
-  consent: false
+  agreePrivacy: false
 });
 
-// 表单状态
-const isSubmitting = ref(false);
-const showPrivacyPolicy = ref(false);
-const errors = reactive({});
-const form = ref(null);
+const errors = reactive({
+  companyName: '',
+  industry: '',
+  contactName: '',
+  email: '',
+  phone: '',
+  productTypes: '',
+  cooperationType: '',
+  agreePrivacy: ''
+});
 
-// 表单验证
+const isSubmitting = ref(false);
+const showSuccessMessage = ref(false);
+const showPrivacyPolicy = ref(false);
+const apiError = ref('');
+
+// 模拟的选项数据（实际项目中可从API获取）
+const industryOptions = ref([
+  { value: '健康食品', label: '健康食品' },
+  { value: '美容护肤', label: '美容护肤' },
+  { value: '高端礼品', label: '高端礼品' },
+  { value: '文化旅游', label: '文化旅游' },
+  { value: '其他', label: '其他' }
+]);
+
+const cooperationTypeOptions = ref([
+  { value: '产品定制', label: '产品定制' },
+  { value: '品牌联名', label: '品牌联名' },
+  { value: '礼盒定制', label: '礼盒定制' },
+  { value: '全案合作', label: '全案合作' }
+]);
+
+const volumeOptions = ref([
+  { value: '10万-50万', label: '10万-50万' },
+  { value: '50万-100万', label: '50万-100万' },
+  { value: '100万-500万', label: '100万-500万' },
+  { value: '500万以上', label: '500万以上' },
+  { value: '待定', label: '待定' }
+]);
+
+const timeframeOptions = ref([
+  { value: '1个月内', label: '1个月内' },
+  { value: '1-3个月', label: '1-3个月' },
+  { value: '3-6个月', label: '3-6个月' },
+  { value: '半年以上', label: '半年以上' },
+  { value: '待定', label: '待定' }
+]);
+
+// 尝试从API获取选项数据
+const fetchOptions = async () => {
+  try {
+    const [industriesResponse, typesResponse] = await Promise.all([
+      getIndustryTypes(),
+      getCollaborationTypes()
+    ]);
+    
+    if (industriesResponse && industriesResponse.data) {
+      industryOptions.value = industriesResponse.data;
+    }
+    
+    if (typesResponse && typesResponse.data) {
+      cooperationTypeOptions.value = typesResponse.data;
+    }
+  } catch (error) {
+    console.error('获取选项数据失败，使用默认值', error);
+    // 使用默认值，已经在上面定义了
+  }
+};
+
+// 组件挂载时获取选项数据
+fetchOptions();
+
 const validateForm = () => {
   let isValid = true;
-  errors.companyName = '';
-  errors.industry = '';
-  errors.contactName = '';
-  errors.email = '';
-  errors.phone = '';
-  errors.productTypes = '';
-  errors.cooperationType = '';
-  errors.cooperationDetails = '';
-  errors.consent = '';
-  
+  // 重置所有错误
+  Object.keys(errors).forEach(key => {
+    errors[key] = '';
+  });
+
+  // 验证必填字段
   if (!formData.companyName.trim()) {
     errors.companyName = '请输入公司/品牌名称';
     isValid = false;
   }
-  
+
   if (!formData.industry) {
     errors.industry = '请选择所属行业';
     isValid = false;
   }
-  
+
   if (!formData.contactName.trim()) {
     errors.contactName = '请输入联系人姓名';
     isValid = false;
   }
-  
+
   if (!formData.email.trim()) {
-    errors.email = '请输入邮箱';
+    errors.email = '请输入电子邮箱';
     isValid = false;
-  } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
-    errors.email = '请输入有效的邮箱地址';
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    errors.email = '请输入有效的电子邮箱';
     isValid = false;
   }
-  
+
   if (!formData.phone.trim()) {
     errors.phone = '请输入联系电话';
     isValid = false;
+  } else if (!/^1[3-9]\d{9}$/.test(formData.phone)) {
+    errors.phone = '请输入有效的手机号码';
+    isValid = false;
   }
-  
+
   if (formData.productTypes.length === 0) {
-    errors.productTypes = '请至少选择一种合作品类';
+    errors.productTypes = '请至少选择一种合作产品类型';
     isValid = false;
   }
-  
+
   if (!formData.cooperationType) {
-    errors.cooperationType = '请选择合作方式';
+    errors.cooperationType = '请选择合作类型';
     isValid = false;
   }
-  
-  if (!formData.cooperationDetails.trim()) {
-    errors.cooperationDetails = '请详细描述您的合作需求';
+
+  if (!formData.agreePrivacy) {
+    errors.agreePrivacy = '请阅读并同意隐私政策';
     isValid = false;
   }
-  
-  if (!formData.consent) {
-    errors.consent = '请同意我们的隐私政策';
-    isValid = false;
-  }
-  
+
   return isValid;
 };
 
-// 提交表单
 const handleSubmit = async () => {
   if (!validateForm()) {
-    // 滚动到第一个错误的位置
-    const firstError = document.querySelector('.error');
+    // 滚动到第一个错误
+    const firstError = document.querySelector('.error-message');
     if (firstError) {
       firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     return;
   }
-  
+
   isSubmitting.value = true;
+  apiError.value = '';
   
   try {
-    // 这里可以添加实际的API调用，将表单数据发送到后端
-    // const response = await axios.post('/api/collaboration-requests', formData);
+    // 准备提交的数据
+    const submissionData = {
+      company_name: formData.companyName,
+      industry: formData.industry,
+      contact_name: formData.contactName,
+      position: formData.position,
+      email: formData.email,
+      phone: formData.phone,
+      product_types: formData.productTypes,
+      cooperation_type: formData.cooperationType,
+      expected_volume: formData.annualVolume,
+      expected_start_date: formData.expectedStartDate,
+      details: formData.cooperationDetails
+    };
     
-    // 模拟API调用延迟
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await submitCollaborationRequest(submissionData);
     
     // 重置表单
     Object.keys(formData).forEach(key => {
-      if (Array.isArray(formData[key])) {
+      if (key === 'productTypes') {
         formData[key] = [];
-      } else if (typeof formData[key] === 'boolean') {
+      } else if (key === 'agreePrivacy') {
         formData[key] = false;
       } else {
         formData[key] = '';
       }
     });
     
-    // 触发提交成功事件
-    emit('form-submitted');
-    
+    showSuccessMessage.value = true;
+    setTimeout(() => {
+      showSuccessMessage.value = false;
+    }, 5000); // 5秒后隐藏成功消息
   } catch (error) {
-    console.error('提交表单失败:', error);
-    alert('提交失败，请稍后重试。');
+    console.error('表单提交失败:', error);
+    apiError.value = error.response?.data?.message || '提交失败，请稍后重试或联系客服';
   } finally {
     isSubmitting.value = false;
   }
+};
+
+const handleBackToHome = () => {
+  window.location.href = '/';
+};
+
+const handleViewProducts = () => {
+  window.location.href = '/products';
+};
+
+const togglePrivacyPolicy = () => {
+  showPrivacyPolicy.value = !showPrivacyPolicy.value;
 };
 </script>
 

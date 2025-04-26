@@ -264,3 +264,13 @@
   * 缓解措施：设计分批处理机制，添加任务队列处理大批量操作
 * 协作风险：前后端开发进度不同步，可能导致集成困难
   * 缓解措施：加强前后端协作，明确API接口规范
+
+**2024-07-30 21:45:**
+- [✓] 修复 `ContactView.vue` 中 `AppHeader` 组件导入路径错误。
+- [✓] 修复 `ContactView.vue` 中地图图片路径 `/img/location-map.jpg` 引用错误。
+- [✓] 安装 `leaflet` 和 `@vue-leaflet/vue-leaflet` 依赖。
+- [✓] 在 `main.js` 中导入 Leaflet CSS。
+- [✓] 在 `ContactView.vue` 中使用 Leaflet 地图替换图片占位符，实现地图显示功能。
+
+**后续计划:**
+- ...

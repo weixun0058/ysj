@@ -21,8 +21,8 @@ import CartView from '../views/CartView.vue';
 import LoginView from '../views/LoginView.vue';
 import RegisterView from '../views/RegisterView.vue';
 // import GiftsView from '../views/GiftsView.vue';
-// import AdoptionView from '../views/AdoptionView.vue';
-// import ContactView from '../views/ContactView.vue';
+import BeeAdoptionView from '../views/BeeAdoptionView.vue'; // 导入蜜蜂认养页面
+import ContactView from '../views/ContactView.vue'; // 导入联系我们页面
 import UserCenterView from '../views/UserCenterView.vue'; // 导入用户中心视图
 import { useAuthStore } from '../stores/auth'; // 导入 auth store
 import TestAuthView from '../views/TestAuthView.vue';
@@ -112,18 +112,21 @@ const routes = [
     name: 'Gifts',
     component: GiftsView,
   },
+  */
+  // 添加蜜蜂认养页面路由
   {
     path: '/adoption',
-    name: 'Adoption',
-    component: AdoptionView,
-    meta: { requiresAuth: true }
+    name: 'BeeAdoption',
+    component: BeeAdoptionView,
+    meta: { title: '蜜蜂认养 - 壹世健' }
   },
+  // 添加联系我们页面路由
   {
     path: '/contact',
     name: 'Contact',
     component: ContactView,
+    meta: { title: '联系我们 - 壹世健' }
   },
-  */
   {
     path: '/user-center',
     name: 'UserCenter',
