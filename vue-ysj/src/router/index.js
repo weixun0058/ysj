@@ -1,12 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue'; // 假设我们把 App.vue 的内容移到 HomeView
 import BrandStoryView from '../views/BrandStoryView.vue';
+
+import ProductsView from '../views/products/ProductsView.vue';
+import ProductDetailView from '../views/products/ProductDetailView.vue';
+
+import NewsView from '../views/news/NewsView.vue';
+import NewsDetailView from '../views/news/NewsDetailView.vue';
+
+
+
 import NotFoundView from '../views/NotFoundView.vue';
-import ProductsView from '../views/ProductsView.vue';
-import ProductDetailView from '../views/ProductDetailView.vue';
-import NewsView from '../views/NewsView.vue';
-import NewsDetailView from '../views/NewsDetailView.vue';
-import CreateNewsView from '../views/admin/CreateNewsView.vue';
 // 导入文章管理相关组件
 import ManageNewsView from '../views/admin/ManageNewsView.vue';
 import EditNewsView from '../views/admin/EditNewsView.vue';
@@ -14,6 +18,8 @@ import EditNewsView from '../views/admin/EditNewsView.vue';
 import UserManagementView from '../views/admin/UserManagementView.vue';
 // 导入产品管理组件
 import ProductManagementView from '../views/admin/ProductManagementView.vue';
+//导入文章管理组件
+import CreateNewsView from '../views/admin/CreateNewsView.vue';
 // 导入网站设置组件
 import SiteSettingsView from '../views/admin/SiteSettingsView.vue';
 // 取消注释这些导入
@@ -106,13 +112,7 @@ const routes = [
     component: RegisterView,
     meta: { guestOnly: true }
   },
-  /*
-  {
-    path: '/gifts',
-    name: 'Gifts',
-    component: GiftsView,
-  },
-  */
+
   // 添加蜜蜂认养页面路由
   {
     path: '/adoption',
@@ -148,13 +148,6 @@ const routes = [
     component: TestEditorView,
   },
   
-  // 移除管理员专用登录路由
-  // {
-  //   path: '/admin/login',
-  //   name: 'AdminLogin',
-  //   component: AdminLoginView,
-  //   meta: { adminLoginPage: true }
-  // },
   
   // 管理后台路由组
   {

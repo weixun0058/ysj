@@ -1,0 +1,33 @@
+网站根目录 (/)
+│
+├── 前台页面 (由 App.vue 统一布局: AppHeader + router-view + AppFooter)
+│   ├── 首页 (HomeView.vue) - `/`
+│   ├── 品牌故事 (BrandStoryView.vue) - `/brand-story`
+│   ├── 产品中心
+│   │   ├── 产品列表 (ProductsView.vue) - `/products`
+│   │   └── 产品详情 (ProductDetailView.vue) - `/products/:id`
+│   ├── 联名定制 (BrandCollaborationView.vue) - `/brand-collaboration`
+│   ├── 认养计划 (BeeAdoptionView.vue) - `/adoption`
+│   ├── 动态资讯
+│   │   ├── 资讯列表 (NewsView.vue) - `/news`
+│   │   └── 资讯详情 (NewsDetailView.vue) - `/news/:slug`
+│   ├── 联系我们 (ContactView.vue) - `/contact`
+│   ├── 购物车 (CartView.vue) - `/cart` (需登录)
+│   ├── 用户中心 (UserCenterView.vue) - `/user-center` (需登录)
+│   ├── 登录 (LoginView.vue) - `/login` (仅访客)
+│   ├── 注册 (RegisterView.vue) - `/register` (仅访客)
+│   ├── 测试认证 (TestAuthView.vue) - `/test-auth`
+│   ├── 富文本测试 (TestEditorView.vue) - `/test-editor`
+│   └── 404 Not Found (NotFoundView.vue) - 匹配所有未定义路径
+│
+└── 后台管理页面 (由 AdminLayout.vue 布局，整体路径前缀 `/admin`)
+    ├── 仪表盘 (DashboardView.vue) - `/admin/dashboard`
+    ├── 用户管理 (UserManagementView.vue) - `/admin/users`
+    ├── 产品管理 (ProductManagementView.vue) - `/admin/products`
+    ├── 文章管理
+    │   ├── 发布文章 (CreateNewsView.vue) - `/admin/news/create` (也可直接访问 /admin/news/create)
+    │   ├── 文章列表 (ManageNewsView.vue) - `/admin/news`
+    │   └── 编辑文章 (EditNewsView.vue) - `/admin/news/edit/:id`
+    ├── 网站设置 (SiteSettingsView.vue) - `/admin/settings`
+    ├── API测试 (DevTestView.vue) - `/admin/dev-test`
+    └── 富文本测试 (TestEditorView.vue) - `/admin/test-editor` (后台路径)

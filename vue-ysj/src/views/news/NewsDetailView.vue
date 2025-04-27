@@ -23,7 +23,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { getNewsDetail } from '../api/newsApi'; // 导入新的API服务
+import { getNewsDetail } from '../../api/newsApi'; // 导入新的API服务
 
 const route = useRoute();
 const article = ref(null);

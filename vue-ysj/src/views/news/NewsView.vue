@@ -38,7 +38,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router'; 
-import { getNewsList } from '../api/newsApi'; // 导入新的API服务
+import { getNewsList } from '../../api/newsApi'; // 导入新的API服务
 
 const articles = ref([]);
 const loading = ref(true);

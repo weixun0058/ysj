@@ -1,9 +1,9 @@
 <script setup>
 // 导入之前在 App.vue 中使用的主页组件
-import HeroSection from '../components/HeroSection.vue';
-import FeaturesSection from '../components/FeaturesSection.vue';
-import ProductsSection from '../components/ProductsSection.vue';
-import EntryPointsSection from '../components/EntryPointsSection.vue';
+import HeroSection from './home/HeroSection.vue';
+import FeaturesSection from './home/FeaturesSection.vue';
+import ProductsSection from './home/ProductsSection.vue';
+import EntryPointsSection from './home/EntryPointsSection.vue';
 </script>
 
 <template>
